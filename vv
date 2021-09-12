@@ -508,8 +508,6 @@ getnumcolors() {
     if read -a REPLY -s -t ${timeout} -d "S" -p $'\e[?1;1;0S' >&2; then
 	[[ ${REPLY[1]} == "0" ]] && n=${REPLY[2]}
     fi
-    # Bug workaround: mlterm does not report number of colors.
-    if [[ $TERM =~ mlterm ]]; then n=256; fi
     # YAFT is vt102 compatible, cannot respond to vt220 escape sequence.
     if [[ "$TERM" == yaft* ]]; then n=256; fi
 
