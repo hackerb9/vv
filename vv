@@ -344,13 +344,6 @@ autodetect() {
     # Make sure the terminal supports sixel graphics.
     hassixelordie
 
-    # Enable sixel scrolling so image will appear right after cursor.
-    echo -ne $'\e[?80h'
-    if [[ $TERM == "mlterm" ]]; then
-	# Except... mlterm (as of 3.8.6) has a bug that reverses the sense
-	echo -ne $'\e[?80l'
-    fi
-
     # Terminal color palette ("registers") autodetection.
     read numcolors < <(getnumcolors $numcolors)
 
