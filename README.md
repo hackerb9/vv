@@ -94,6 +94,8 @@ script uses "file://$filename[0]".
 
 ## Todo
 
+* We're sending OSC 8 hyperlinks, but do they work?
+* Add --cat option which just splats images out as fast as possible.
 * Handle genuine VT340 specially so it doesn't change foreground/background colors. 
 * Reconsider `v` (view just this image fullscreen) and `f` (fullscreen
   toggle) keys. Maybe should either be modal or not. May help to
