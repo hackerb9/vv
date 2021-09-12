@@ -1,9 +1,11 @@
 # vv
 
+<img src="README.md.d/vv.gif" align="right" width="25%" alt="Example of running vv">
+
 A simple image viewer for terminal capable of sixel graphics.
 
-Quickly preview and delete or move files. Particularly useful on
-remote machines over `ssh`.
+Quickly preview, delete, and move files. Particularly useful on remote
+machines over `ssh`.
 
 ## Required dependencies
 
