@@ -1167,7 +1167,7 @@ id() {
     fi
     local comment=$(identify -format "%[comment]"  "file://$f[0]" 2>/dev/null)
     if [[ "$comment" ]]; then
-	echo "Comment: $comment"
+	echo "Comment: $comment" | fmt -w "${COLUMNS:-75}" -s
     fi
 }
 
@@ -1512,7 +1512,10 @@ doit () {
 		   # b reserved for "back" once we implement it.
 		   ;;
 
-		c) identify -format "Comment: %[comment]\n"  "file://$f[0]" 2>/dev/null
+		c) identify -format \
+		    "Comment: %[comment]\n"  "file://$f[0]" 2>/dev/null \
+			| fmt -w "${COLUMNS:-75}" -s
+
 		   ;;
 		C) editproperty comment "$f"
 		   ;;
