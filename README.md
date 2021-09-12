@@ -20,7 +20,7 @@ machines over `ssh`.
 * GNU coreutils (for realpath, for deleting images to trashcan)
 * curl, w3m and w3m-img for text based reverse image search
 * Bash version >=5 (read bug workaround)
-* [sixvid](https://github.com/hackerb9/sixvid) & ffmpeg: VT viewer so viewing an mp4 will play an animation
+* [sixvid](https://github.com/hackerb9/sixvid) & ffmpeg: so viewing an mp4 or gif will play an animation
 * poppler-utils (for pdfinfo to count pages in PDF files)
 
 ## Some nice features
@@ -34,28 +34,32 @@ machines over `ssh`.
 * Has "best fit" (`B`), autorotate to use as much of the screen as possible.
 * Defaults to fast viewing [-F] to quickly preview and delete (`d`) images,
   or use [-f] to default to full-size (slower, highquality) view.
-* Hit (v) to view full-size (slower, highquality) for current image only,
-  or use (f) to toggle between fast and full-size viewing mode.
-* Preview size can be increased (+), decreased (-), or reset (0).
-* Deleted (d) images are moved to Trashcan (Freedesktop standard).
-* Can undo (u) last trashed file.
-* Web reverse image search (W). (Currently uses yandex).
-* Slideshow mode (S).
-* Renaming a file (r) uses readline for easier editing.
-* Move (m) and save-a-copy (s) remember previously used directory.
-* Edit embedded comments (C). Works with JPEG, PNG, TIFF, GIF, and more.
+* Hit (`v`) to view full-size (slower, highquality) for current image only,
+  or use (`f`) to toggle between fast and full-size viewing mode.
+* Preview size can be increased (`+`), decreased (`-`), or reset (`0`).
+* Deleted (`d`) images are moved to Trashcan (Freedesktop standard).
+* Can undo (`u`) last trashed file.
+* Move (`m`) and save-a-copy (`s`) remember previously used directory.
+* Web reverse image search (`W`). (Currently uses yandex).
+* Slideshow mode (`S`).
+* Renaming a file (`r`) uses readline for easier editing.
+* Edit embedded comments (`C`). Works with JPEG, PNG, TIFF, GIF, and more.
 * Embedded comments can have multiple lines (use ^V^J for a new line).
 * Sets xterm to use more color registers for higher quality pictures.
-* Should work on true DEC hardware (e.g., VT340).
+* Work on true DEC hardware (e.g., VT340).
 * Resizes current image when terminal resizes. (SIGWINCH).
 * Pixel height of preview is a multiple of the current text font height,
   so previews should be the right size no matter your screen resolution. 
 * Pixel width of preview is always the full width of the terminal.
-* View videos (v) such as animated GIFs. (Requires 'sixvid' and ffmpeg).
-* Icons and small images can be zoomed in to screen size. (z to toggle).
+* View videos (`v`) such as animated GIFs. (Requires 'sixvid' and ffmpeg).
+* Icons and small images can be zoomed in to screen size. (`z` to toggle).
 * Breadth first search. Images in current dir are shown before subdirs.
 * If renaming or moving would overwrite an image with a different one,
   both images are shown side-by-side. 
+* Images with transparency use the terminal's background color.
+
+<img src="README.md.d/avatar.png" alt="Example of vv showing an avatar with a transparent background">
+
 
 ## NOTES
 
@@ -125,13 +129,15 @@ script uses "file://$filename[0]".
 * PDF documents should work like a directory, asking user if they want
   to open and show images inside.
 * CBZ, comicbook zip files should also work like directories.
+* Should handle when ImageMagick dies due restrictions in
+  /etc/ImageMagick-6/policy.xml. (For example, viewing an xcf file
+  will often overrun the memory limit).
 
 ## Questions
 
-* Any reason to use 'find' instead using our recursion implementation?
 * Should we allow SVG and EPS which are images, but can execute code?
 * Entering multiline comments are weird because you have to type `^V`
-  `^J` to create a newline. Should they pop into an editor?
+  `^J` to create a newline. Should they pop open an editor?
 
 ## About Metadata
 
