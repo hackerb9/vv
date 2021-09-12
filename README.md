@@ -1,11 +1,11 @@
 # vv
 
-<img src="README.md.d/vv.gif" align="right" width="25%" alt="Example of running vv">
-
 A simple image viewer for terminals capable of sixel graphics.
 
 Quickly preview, delete, and move files. Particularly useful on remote
 machines over `ssh`.
+
+<img src="README.md.d/avatar.png" alt="Example of vv showing an avatar with a transparent background">
 
 ## Required dependencies
 
@@ -57,8 +57,6 @@ machines over `ssh`.
 * If renaming or moving would overwrite an image with a different one,
   both images are shown side-by-side. 
 * Images with transparency use the terminal's background color.
-
-<img src="README.md.d/avatar.png" alt="Example of vv showing an avatar with a transparent background">
 
 
 ## NOTES
