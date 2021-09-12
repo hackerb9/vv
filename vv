@@ -217,6 +217,7 @@ cleanup() {
     # If the user hits ^C, we don't want them stuck in SIXEL mode
     echo -n $'\e\\'		# Escape sequence to stop SIXEL
     stty echo			# Reset terminal to show input characters.
+    stty icanon			# Allow backspace to work again.
     stty sane			# For bash 4.4's SIGWINCH-in-read bug
     echo -en "\r"; tput el	# Clear line for prompt. 
     tput rmkx			# Disable terminal application key sequences
@@ -333,6 +334,9 @@ autodetect() {
 
     # Don't show escape sequences the terminal doesn't understand.
     stty -echo			# Hush-a Mandara Ni Pari
+
+    # Don't consume backspace key before 'read'.
+    stty -icanon
 
     # Hide the cursor so it doesn't dash around when we show the prompt.
     tput civis	
