@@ -521,7 +521,7 @@ getnumcolors() {
     fi
 
     # Return the results (or the default if querying didn't work)
-    [[ $n -gt 0 ]] || n=${1}
+    [[ $n -gt 0 ]] || n=${1:-16}
     echo $n
     return
 }
@@ -1286,7 +1286,7 @@ showimage() {
 		convert "file://$1[0]" \
 			-$resize "$gt${width}x${previewsize}" \
 			+repage -background $background -auto-orient \
-			-flatten +dither -colors 256 \
+			-flatten +dither -colors $numcolors \
 			sixel:-
 		echo -en "\e]8;;\e\\" # End OSC 8 URL linking
 		  )
