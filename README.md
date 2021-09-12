@@ -9,10 +9,10 @@ machines over `ssh`.
 
 ## Installation
 
-It's just a shell script. Just download
+It's a shell script. Just download
 [vv](https://github.com/hackerb9/vv/raw/main/vv) to a directory in
 your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
-(chmod +x vv). 
+(chmod +x vv).
 
 ## Required dependencies
 
@@ -51,6 +51,8 @@ your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 * Web reverse image search (`W`). (Currently uses yandex).
 * Slideshow mode (`S`).
 * Renaming a file (`r`) uses readline for easier editing.
+* Rename and move default to the last directory used.
+* Parent directories automatically created if nonexistent when moving a file.
 * Edit embedded comments (`C`). Works with JPEG, PNG, TIFF, GIF, and more.
 * Embedded comments can have multiple lines (use ^V^J for a new line).
 * Sets xterm to use more color registers for higher quality pictures.
@@ -65,6 +67,8 @@ your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 * If renaming or moving would overwrite an image with a different one,
   both images are shown side-by-side. 
 * Images with transparency use the terminal's background color.
+* Thumbnails may be clicked on to open in your default viewer
+  (requires a terminal that understands the OSC 8 escape sequence).
 
 
 ## NOTES
@@ -101,7 +105,6 @@ script uses "file://$filename[0]".
 
 ## Todo
 
-* We're sending OSC 8 hyperlinks, but do they work?
 * Add --cat option which just splats images out as fast as possible.
 * Handle genuine VT340 specially so it doesn't change foreground/background colors. 
 * Reconsider `v` (view just this image fullscreen) and `f` (fullscreen
