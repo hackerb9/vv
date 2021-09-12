@@ -7,6 +7,13 @@ machines over `ssh`.
 
 <img src="README.md.d/avatar.png" alt="Example of vv showing an avatar with a transparent background">
 
+## Installation
+
+It's just a shell script. Just download
+[vv](https://github.com/hackerb9/vv/blob/main/vv) to a directory in
+your PATH (e.g., $HOME/bin or /usr/local/bin) and make it executable
+(chmod +x vv). 
+
 ## Required dependencies
 
 * A sixel capable terminal (e.g., xterm -ti vt340).
