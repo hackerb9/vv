@@ -52,7 +52,7 @@ your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 * Slideshow mode (`S`).
 * Renaming a file (`r`) uses readline for easier editing.
 * Rename and move default to the last directory used.
-* Parent directories automatically created if nonexistent when moving a file.
+* Directories are automatically created if nonexistent when moving a file.
 * Edit embedded comments (`C`). Works with JPEG, PNG, TIFF, GIF, and more.
 * Embedded comments can have multiple lines (use ^V^J for a new line).
 * Sets xterm to use more color registers for higher quality pictures.
