@@ -20,7 +20,8 @@ machines over `ssh`.
 * GNU coreutils (for realpath, for deleting images to trashcan)
 * curl, w3m and w3m-img for text based reverse image search
 * Bash version >=5 (read bug workaround)
-* [sixvid](https://github.com/hackerb9/sixvid) & ffmpeg: so viewing an mp4 or gif will play an animation
+* [sixvid](https://github.com/hackerb9/sixvid) & ffmpeg: so viewing a
+  gif or mp4 will play an animation
 * poppler-utils (for pdfinfo to count pages in PDF files)
 
 ## Some nice features
@@ -93,16 +94,15 @@ script uses "file://$filename[0]".
 
 ## Todo
 
-* Handle VT340 specially so it doesn't change foreground/background colors. 
+* Handle genuine VT340 specially so it doesn't change foreground/background colors. 
 * Reconsider `v` (view just this image fullscreen) and `f` (fullscreen
   toggle) keys. Maybe should either be modal or not. May help to
-  redefine `F` to always switch to fast mode and 'f' to always switch
-  to fullscreen mode.
+  redefine `Enter` to always switch to fast mode and 'f' to always switch
+  to fullscreen mode? 
 * Allow file sortorder to be changed interactively instead of editing
   script. (modification/access time, natural sort).
 * Should not show pdf, odt, xls and other slow formats by default.
-* Prompt should be less verbose. Just a : for images, ellipses for video.
-  Maybe show succinct help only if a wrong key is hit.
+* Currently prompt is less verbose if the screen width is too short, but maybe that should always be the case and only show the succinct help only if a wrong key is hit.
 * Implement "-1" and "-w" to default to 1-for-1 and Wide view mode.
 * Consider using b9's feh key bindings.
 * Show a quick overview of all images in the directory. (Like lsix).
