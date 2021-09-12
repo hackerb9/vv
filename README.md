@@ -67,8 +67,10 @@ your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 * If renaming or moving would overwrite an image with a different one,
   both images are shown side-by-side. 
 * Images with transparency use the terminal's background color.
-* Thumbnails may be clicked on to open in your default viewer
-  (requires a terminal that understands the OSC 8 escape sequence).
+* Thumbnails may be clicked on to open in your default viewer.
+  (Requires a terminal that understands the 
+  [OSC 8](https://gist.github.com/egmontkob/eb114294efbcd5adb1944c9f3cb5feda)
+  escape sequence).
 
 
 ## NOTES
