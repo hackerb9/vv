@@ -1238,6 +1238,10 @@ showimage() {
     # Save the sixel output to a variable so we can clear "Processing..." message.
     local output=""
 
+    # OSC 8 URI linking so user can click on image to open it
+    local osc8uri="file://`hostname --fqdn``realpath "$1"`"
+    debug "OSC 8 URI link goes to $osc8uri"
+
     case $viewmode in
 	hq)	       		       # High Quality and slow. (about 1 second)
 	    e "preparing high quality"
@@ -1281,14 +1285,16 @@ showimage() {
 	    # Note that -sample is faster for large images, but super cruddy.
 	    # 3,000,000 pixels empirically found as where time benefit began.
 	    [[ ImageWidth*ImageHeight -lt 3000000 ]] || resize=sample
-	    output=$(${TIME} \
-		echo -en "\e]8;;file://`hostname --fqdn``realpath $1`\e\\" # Begin OSC 8 URL linking
+
+	    output=$(
+		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
+		${TIME} \
 		convert "file://$1[0]" \
 			-$resize "$gt${width}x${previewsize}" \
 			+repage -background $background -auto-orient \
 			-flatten +dither -colors $numcolors \
 			sixel:-
-		echo -en "\e]8;;\e\\" # End OSC 8 URL linking
+		echo -en "\e]8;;\e\\" # End OSC 8 URI linking
 		  )
 	    # Note: -flatten and -background is needed for transparency.
 	    # Note: +repage is needed for images with virtual canvases.
