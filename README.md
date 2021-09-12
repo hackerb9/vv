@@ -10,8 +10,8 @@ machines over `ssh`.
 ## Installation
 
 It's just a shell script. Just download
-[vv](https://github.com/hackerb9/vv/blob/main/vv) to a directory in
-your PATH (e.g., $HOME/bin or /usr/local/bin) and make it executable
+[vv](https://github.com/hackerb9/vv/raw/main/vv) to a directory in
+your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 (chmod +x vv). 
 
 ## Required dependencies
