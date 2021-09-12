@@ -2,7 +2,7 @@
 
 <img src="README.md.d/vv.gif" align="right" width="25%" alt="Example of running vv">
 
-A simple image viewer for terminal capable of sixel graphics.
+A simple image viewer for terminals capable of sixel graphics.
 
 Quickly preview, delete, and move files. Particularly useful on remote
 machines over `ssh`.
