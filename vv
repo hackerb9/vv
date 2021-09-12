@@ -297,6 +297,9 @@ prerequisites() {
     if ! command -v numfmt >/dev/null; then
 	numfmt() { tr '\t'  ' '; } # Only needed for nicely grouping thousands
     fi
+    if ! command -v fmt >/dev/null; then
+	fmt() { cat ; }	   # Only needed for wrapping long comments
+    fi
     if ! command -v pdfinfo >/dev/null; then
 	notice "Please install pdfinfo (poppler-utils) for counting PDF pages."
 	pdfinfo() { echo "Pages: 1" ; }
