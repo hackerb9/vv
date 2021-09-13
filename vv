@@ -2,7 +2,7 @@
 
 # vv: VT View
 
-# Version 1.8
+# Version 1.8+
 # B9 August 2021
 
 # Use sixel graphics to show images inside a terminal (e.g., xterm).
@@ -54,114 +54,45 @@
 # * sixvid & ffmpeg: VT viewer so viewing an mp4 will play an animation
 # * poppler-utils (for pdfinfo to count pages in PDF files)
 
-# NOTES:
-
-# Note 1: This is designed mainly for quickly previewing, deleting,
-# 	  and renaming images over an ssh connection. For that reason,
-# 	  fast, small, low-quality images are emphasized and deletion
-# 	  is a single keystroke. (Note, undeletion is also a single key).
+# Note: This is designed mainly for quickly previewing, deleting,
+# 	and renaming images over an ssh connection. For that reason,
+# 	fast, small, low-quality images are emphasized and deletion
+# 	is a single keystroke. (Note, undeletion is also a single key).
 #
-# Note 2: libglib2.0-bin's 'gio' will used for moving files to the
-#	  Trashcan, if it is installed, but it is not required.
-#	  See the trash() and untrash() shell functions.
-#
-# Note 3: Bash 4.4 had a bug where catching SIGWINCH in the middle
-#	  of a normal 'read' would cause the stty to go insane.
-#	  For that reason, in the main loop we use 'read -e' 
-#	  which uses readline and does not suffer from the bug.
-#	  (Bash 5 is fine.)
-#
-# Note 4: ImageMagick 6.9 does not support webm video.
-#
-# Note 5: ImageMagick 6.9.10 has a bug where a filename that has a
-# 	  colon in it will not work when frame zero is selected.
-#	  As a workaround, this script uses "file://$filename[0]".
-
-# Todo: 
-
-# * Reconsider 'v' (view fullscreen) and 'f' (fullscreen toggle) keys.
-# * Allow sortorder to be changed (modification/access time, natural). 
-# * Should not show pdf, odt, xls and other slow formats by default.
-# * Prompt should be less verbose. Just a : for images, ellipses for video.
-#   Maybe show succinct help only if a wrong key is hit.
-# * Implement "-1" and "-w" to default to 1-for-1 and Wide view mode.
-# * Consider using b9's feh key bindings.
-# * Show a quick overview of all images in the directory. (Like lsix).
-# * Allow selecting a range of images for deletion.
-# * imageinfo() calls ImageMagick's identify which is too slow.
-# * Use exiftool for property adjustments, not imagemagick which fails.
-# * Use an array of filenames so user can go back to previous, and
-#                             so untrash won't take place of current image.
-# * Use vi/nethack keys. (j next, k prev, h back to parent directory, l ?) 
-# * Include mycompare.sh to interactively compare two files. (A/B)
-# * Edit Caption, Title, Headline in IPTC, XMP
-# * Allow user to force white/black background. (Mainly for text pdfs).
-# * Add a key for opening image in standard graphical viewer
-#				(M for mime? O for open?).
-# * Maybe also allow graphical browser during reverse image search?
-# * Maybe use multiprocessing by converting full screen images in patches.
-#   (Added benefit, works within Xterm's default 1000x1000 limitation).
-# * Maybe use 'find' instead of implementing recursion?
-# * Maybe quit immediately (batch mode) if only 1 image on command line?
-# * PDF documents should work like a directory.
-# * CBZ, comicbook zip files should also work like directories.
-# * Q: What about SVG and EPS which are images, but can execute code?
+# Design:
 
 
-# ABOUT METADATA
+#	This should feel like a command-line program that just happens
+# 	to have graphics. In particular, it should *NOT* take over the
+# 	whole screen.
+#
+# 	Current work is appended at the bottom. Old images should
+#	scroll off the top.
+#
+#  	Keep hands on home row. Allow harder to reach keys -- like Esc
+#  	and arrows -- only as aliases for easier to hit keys.
+#
+#	Common functions are mapped to a single key, without shift.
+#	The most frequently used functions are on the home row. 
+#	Less common functions may include shift. 
+#
+#	As much as possible, reduce repetitive work. 
+#
+#	Go as fast as possible, trading off quality if necessary. 
 
-# The author, hackerb9, has long added little notes and blurbs to
-# images in the JPEG "Comments" field. However, that humble field has
-# been extended by EXIF, IPTC, and XMP to a dizzying degree:
-# Description, Caption, Headline, Title, .... If you are a
-# professional photographer and have feedback on how this program can
-# better show and manipulate metadata, please send a bug report at
-# https://github.com/hackerb9/vv/
+#	Reduce cognitive load:
 #
-# Here's what I know. The IPTC industry standards define Title,
-# Description/Caption, and Headline as:
-#
-# Title: AKA "Document Title", AKA "Object Name". A shorthand
-#        reference for the image or “photograph” - primarily for
-#        identification. The title of an image should be a short,
-#        human-readable name - text and/or numeric reference - and may
-#        take several forms. For photographers, this might be the
-#        filename of their original scan or digital camera file. The
-#        Title term should not be confused with the Headline term,
-#        which is a short synopsis of the photograph's content.
-#
-# Title Examples: "IMG_9873", "Sunrise Over Temple"
-#
-# Description: AKA "Caption". The Description field, often referred to
-#        as “Caption,” should report the who, what and why of what the
-#        photograph depicts. If there is a person or people in the
-#        image, this caption might include their names, and/or their
-#        roles in any action taking place. If the image depicts a
-#        location, then it should describe the location.
-#
-# Description Example: "The Shore Temple of the Seven Pagodas was
-#        built under Narsimha II of the Pallava dynasty between 7th
-#        and 8th century AD and is dedicated to Lord Shiva. It
-#        resembles the structure of the Dharmaraja rath, but its tower
-#        rises much higher (approx. five stories or ~ 60 ft. high) and
-#        its stupa spire is small and slender."
+#	User shouldn't have to memorize which boolean flags have been flipped. 
+#	Show status everytime an image is displayed. 
+#	
+#	Help should not be overwhelming. Give just the most salient
+#	bits, with ways the user can ask for more help.
 
-# Headline: A headline is a brief, publishable synopsis or summary of
-#        the contents of the photograph. Like a news story's lead, the
-#        Headline should grab attention and summarize the image's
-#        content. Headlines must be succinct. Leave any supporting
-#        narrative for the Description field. Do not, however, confuse
-#        the Headline term with Title.
-#
-# Headline Example: "Shore Temple, Malibalipuram, India"
-#
-# So, it sounds like "Title" is supposed to be the title of the
-# document, like a filename. HOWEVER: Microsoft Windows uses "Title"
-# as the Caption and Flickr uses "Title" as the Headline. So, YMMV.
-#
-# For now, vv only allows setting the "Comment" (C). However, the
-# editproperty function should work once we figure out what the right
-# field to edit is.
+
+
+# 
+# For more info or to report a bug, please see 
+# https://github.com/hackerb9/vv
 
 # Defaults you can change. 
 declare -g  timeout=0.25       # Max secs to wait for control sequence response.
