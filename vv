@@ -932,6 +932,9 @@ isimage() {
 	# But, they ought to be treated like directories which the
 	# user is asked if they wish to open.
 	return 1
+    elif [[ $type == application/dicom ]]; then
+	# ImageMagick can view DICOM (Medical Imaging Data)
+	return 0
     elif [[ $type == video/* ]]; then
 	# Return true for videos.
 	if mediainfo "$file" >/dev/null 2>&1; then
@@ -968,7 +971,7 @@ imageinfo() {
 
     # Based on the filetype, detect parameters and print info.
     case $type in
-	image/*)
+	image/*|application/dicom)
 	    # NB: Running sed repeatedly is faster than "identify -format".
 	    local id=$(identify "$file[-1]" 2>/dev/null)
 	    # sample.miff[-1]=>sample.miff MIFF 100x100 3072x2304+1486+1102 8-bit Palette sRGB 33c 33507B 0.000u 0:00.000
