@@ -2113,7 +2113,7 @@ untrash() {
     done
 
     local Path
-    eval $(grep 'Path=' "$infofile" | head -1)
+    eval $(grep 'Path=' "$infofile" | sed -n '1 s/(/\\(/g; s/)/\\)/gp')
     Path=$(unuriescape "$Path")
 
     if mv --backup=numbered "$trashname" "$Path" && rm "$infofile"; then
