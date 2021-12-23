@@ -1,6 +1,6 @@
-# vv
+# vv: VT View
 
-A simple image viewer for terminals capable of sixel graphics.
+A simple image viewer for video terminals capable of sixel graphics.
 
 Quickly preview, delete, and move files. Particularly useful on remote
 machines over `ssh`.
@@ -47,11 +47,14 @@ your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 * Preview size can be increased (`+`), decreased (`-`), or reset (`0`).
 * Deleted (`d`) images are moved to Trashcan (Freedesktop standard).
 * Can undo (`u`) last trashed file.
-* Move (`m`) and save-a-copy (`s`) remember previously used directory.
+* Rename (`r`), move (`m`) and save-a-copy (`s`) remember the
+  previously used directory.
 * Web reverse image search (`W`). (Currently uses yandex).
 * Slideshow mode (`S`).
 * Renaming a file (`r`) uses readline for easier editing.
 * Rename and move default to the last directory used.
+* If renaming or moving would overwrite an image with a different one,
+  both images are shown side-by-side. 
 * Directories are automatically created if nonexistent when moving a file.
 * Edit embedded comments (`C`). Works with JPEG, PNG, TIFF, GIF, and more.
 * Embedded comments can have multiple lines (use ^V^J for a new line).
@@ -64,8 +67,6 @@ your PATH (e.g., ~/bin or /usr/local/bin) and make it executable
 * View videos (`v`) such as animated GIFs. (Requires 'sixvid' and ffmpeg).
 * Icons and small images can be zoomed in to screen size. (`z` to toggle).
 * Breadth first search. Images in current dir are shown before subdirs.
-* If renaming or moving would overwrite an image with a different one,
-  both images are shown side-by-side. 
 * Images with transparency use the terminal's background color.
 * Thumbnails may be clicked on to open in your default viewer.
   (Requires a terminal that understands the 
@@ -84,7 +85,7 @@ low-quality images are emphasized and deletion is a single keystroke.
 
 ### Note 2
 
-libglib2.0-bin's 'gio' will used for moving files to the Trashcan, if
+libglib2.0-bin's `gio` will be used for moving files to the Trashcan, if
 it is installed, but it is not required. See the trash() and untrash()
 shell functions.
 
@@ -97,29 +98,33 @@ bug. (Bash 5 is fine.)
 
 ### Note 4
 
-ImageMagick 6.9 may not support webm video.
+ImageMagick 6.9.12 has a few issues:
 
-### Note 5
+* may not support webm video.
 
-ImageMagick 6.9.10 has a bug where a filename that has a colon in it
-will not work when frame zero is selected. As a workaround, this
-script uses "file://$filename[0]".
+* has a bug where a filename that has a colon in it will not work when
+frame zero is selected. As a workaround, this script uses
+"file://$filename[0]".
+
+* has a bug where RGB data is not read properly from sixel image files
 
 ## Todo
 
 * Add --cat option which just splats images out as fast as possible.
 * Handle genuine VT340 specially so it doesn't change foreground/background colors. 
 * Reconsider `v` (view just this image fullscreen) and `f` (fullscreen
-  toggle) keys. Maybe should either be modal or not. May help to
+  toggle) keys. Maybe should either be modal or not. Would it help to
   redefine `Enter` to always switch to fast mode and 'f' to always switch
   to fullscreen mode? 
 * Allow file sortorder to be changed interactively instead of editing
   script. (modification/access time, natural sort).
+* Show a quick overview of all images in the directory. (Like lsix).
 * Should not show pdf, odt, xls and other slow formats by default.
-* Currently prompt is less verbose if the screen width is too short, but maybe that should always be the case and only show the succinct help only if a wrong key is hit.
+* Currently prompt is less verbose if the screen width is too short,
+  but maybe that should always be the case. Consider showing the succinct
+  help only if a wrong key is hit.
 * Implement "-1" and "-w" to default to 1-for-1 and Wide view mode.
 * Consider using b9's feh key bindings.
-* Show a quick overview of all images in the directory. (Like lsix).
 * Allow selecting a range of images for deletion.
 * imageinfo() calls ImageMagick's identify which is too slow.
 * Use exiftool for property adjustments, not imagemagick which fails.
