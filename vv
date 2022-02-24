@@ -1416,7 +1416,7 @@ doit () {
 		     sleep 0.25; flushstdin # Slow down deletes
 		     continue 2
 		     ;;
-		u) f=$(untrash) && echo "untrashed '$f'" && showimage "$f"
+		u) f=$(untrash) && echo "untrashed '$(tildify $f)'" && showimage "$f"
 		   ;;
 		T) # Undocumented tool to show Trashcan in GUI browser.
 		    mygio open trash://
@@ -2085,6 +2085,8 @@ untrash() {
     # Puts file back where it came from, unless it would clobber another file.
     # If a file of that name already exists, rename existing as .1, .2, ...
     #
+    # If directory it was in is gone, then recreates the directory.
+    #
     # Outputs the filename the of the untrashed file.
     # Returns error if trash is empty.
 
@@ -2112,12 +2114,27 @@ untrash() {
 	fi
     done
 
+
     local Path
-    eval $(grep 'Path=' "$infofile" | head -1)
+    eval $(grep 'Path=' "$infofile" | sed -n '1 { s#(#\\(#g; s#)#\\)#g; p}')
     Path=$(unuriescape "$Path")
 
+    # Does directory even existing for us to write to?
+    if ! mkdir -p $(dirname "$Path") || ! [[ -w $(dirname "$Path") ]]; then
+	echo "Warning: Cannot write to '$(dirname "$Path")'" >&2
+	echo -n "Warning: Restoring to " >&2
+	if [[ -w "$PWD" ]]; then
+	    tildify "$PWD" >&2
+	    Path="$PWD/$(basename "$Path")"
+	else
+	    tildify "$HOME" >&2
+	    Path="$HOME/$(basename "$Path")"
+	fi
+    fi
+       
+    # Finally, we can restore the file.
     if mv --backup=numbered "$trashname" "$Path" && rm "$infofile"; then
-	echo "$Path"
+	echo "$Path"		# Return filename untrashed
 	return 0
     else
 	return 1
