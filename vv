@@ -388,9 +388,9 @@ trap windowchange SIGWINCH
 hassixelordie() {
     # Returns true if terminal is Sixel capable.
     # Otherwise, prints an error message and dies.
-    local hassixel="" code IFS=";"
+    local hassixel="" code IFS=";?c"
 
-    # IS TERMINAL SIXEL CAPABLE? 		# Send Device Attributes
+    # IS TERMINAL SIXEL CAPABLE?		# Send Device Attributes
     if read -a REPLY -s -t 1 -d "c" -p $'\e[c' >&2; then
        for code in "${REPLY[@]}"; do  
 	   if [[ $code == "4" ]]; then
