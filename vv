@@ -229,7 +229,10 @@ prerequisites() {
 	realpath() { fakerealpath "$@" ; }
     fi
     if ! command -v w3m >/dev/null || command -v w3m-img >/dev/null; then
-	notice "Please install w3m and w3m-img for reverse image search"
+	function w3m {
+	    notice "Please install w3m and w3m-img for reverse image search"
+	}
+	alias w3m-img=w3m
     fi
     if ! command -v curl >/dev/null; then
 	notice "Please install curl for reverse image search"
