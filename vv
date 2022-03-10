@@ -106,7 +106,8 @@ declare -g  sortorder="-v"	# `ls` flag to sort files in "natural" order.
 #declare -g  sortorder="-tru"	# `ls` flag to sort files. Least recent viewed.
 #declare -g  sortorder="-t"	# `ls` flag to sort files. Most recent changed.
 declare -g  traversal="breadth"	# dir recursion: breadth/depth first or neither.
-
+declare -g  shownotices="y"	# Show optional messages.("Install X to get Y").
+#declare -g  shownotices=""	# Empty string to never mention such frippery.
 
 # Defaults for image processing flags. Note that opposite of "y" is "", not "n".
 # To disable, set to empty string. To enable, set to any string.
@@ -186,7 +187,9 @@ error() {
 }
 
 notice() {
-    echo "$(basename $0): notice: $@" >&2
+    if [[ "$shownotices" ]]; then
+	echo "$(basename $0): notice: $@" >&2
+    fi
 }
 
 
