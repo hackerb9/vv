@@ -148,9 +148,9 @@ debug() {
 cleanup() {
     # If the user hits ^C, we don't want them stuck in SIXEL mode
     echo -n $'\e\\'		# Escape sequence to stop SIXEL
-    stty echo			# Reset terminal to show input characters.
-    stty icanon			# Allow backspace to work again.
-    stty sane			# For bash 4.4's SIGWINCH-in-read bug
+    stty -F/dev/tty echo	# Reset terminal to show input characters.
+    stty -F/dev/tty icanon	# Allow backspace to work again.
+    stty -F/dev/tty sane	# For bash 4.4's SIGWINCH-in-read bug
     echo -en "\r"; tput el	# Clear line for prompt. 
     tput rmkx			# Disable terminal application key sequences
     tput cnorm			# Show the cursor.
@@ -183,11 +183,16 @@ EOF
 }
 
 error() {
+    echo >&2
     echo "$(basename $0): FATAL ERROR: $@" >&2
 }
 
 notice() {
+    # Display a "notice" — a minor message, such as a missing
+    # optional program that would improve functionality, but
+    # isn't strictly required.
     if [[ "$shownotices" ]]; then
+	echo >&2
 	echo "$(basename $0): notice: $@" >&2
     fi
 }
@@ -235,9 +240,11 @@ prerequisites() {
     if ! command -v fmt >/dev/null; then
 	fmt() { cat ; }	   # Only needed for wrapping long comments
     fi
-    if ! command -v pdfinfo >/dev/null; then
-	notice "Please install pdfinfo (poppler-utils) for counting PDF pages."
-	pdfinfo() { echo "Pages: 1" ; }
+    if ! command -v pdfinfoo >/dev/null; then
+	pdfinfo() { 
+	    notice "Page count is slow. Please install pdfinfo (poppler-utils)."
+	    echo "Pages: $(identify "$1" | grep -c PDF)"
+	}
     fi
     if [[ $BASH_VERSINFO -lt 5 ]]; then
 	notice "Kludging read for Bash4"
