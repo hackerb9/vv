@@ -24,7 +24,7 @@
 # * Preview size can be increased (+), decreased (-), or reset (0).
 # * Deleted (d) images are moved to Trashcan (Freedesktop standard).
 # * Can undo (u) last trashed file.
-# * Web reverse image search (W). (Currently uses yandex).
+# * Reverse image search using w3m (R). (Currently scrapes yandex).
 # * Slideshow mode (S).
 # * Renaming a file (r) uses readline for easier editing.
 # * Move (m) and save-a-copy (s) remember previously used directory.
@@ -116,6 +116,7 @@ declare -g   dither="y"  # Improve image quality by dithering when viewmode==hq.
 declare -g   aalias="y"  # Smooths jaggies when zooming in on small images. 
 declare -g  enhance=""	 # Lightens dark images with gamma +1.5. Set by (e)
 declare -g   zoomin="y"  # Magnify small images to screen size (slower).
+declare -g wideview=""	 # Fit width of image to width of screen; portrait images scroll off top
 
 # Defaults if terminal autodetection fails.
 declare -gi numcolors=16		# Num colors the terminal can show.
@@ -1177,10 +1178,13 @@ showimage() {
     # would allow us to see more of it on the screen.
     local dorotate=""
 
-    currentview=$viewmode	# Remember last used viewmode.
+    # geometry for ImageMagick's -geometry flag. (Overriden by zoomin and wideview, below).
+    local geometry="${width}x${height}"
 
-    # Maybe use '>' in geometry so imagemagick doesn't magnify small images. 
-    local gt="";  [[ -z "$zoomin" ]]  &&  gt=">"
+    # crop gets set if "wideview" is on
+    local crop=""
+
+    currentview=$viewmode	# Remember last used viewmode.
 
     # Save the sixel output to a variable so we can clear "Processing..." message.
     local output=""
@@ -1199,17 +1203,28 @@ showimage() {
 	    # If antialiasing is off, use -sample to resize the image.
 	    if [[ $aalias ]]; then resize=geometry; else resize=sample; fi
 
-	    if [[ "$bestfit" ]]; then
+	    if [[ "$bestfit" && ! "$wideview" ]]; then
 		dorotate=$(mayberotate "$1")
 		if [[ "$dorotate" ]]; then
 		    extract="-extract >${height}x>${width}"
 		fi
+	    fi
+	    
+	    # Conditionally override the geometry
+	    if [[ "$wideview" ]]; then
+		# Wide view fits image width to screen, but not height
+		geometry=">${width}x"
+		# Round crop down to the height of a line of text to avoid gaps 
+		crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
+	    elif [[ "$zoomin" ]]; then
+		geometry=">${width}x>${height}"
 	    fi
 
 	    # Centering an image can slow down convert by <200ms. Worth it? XXX
 	    local centering="-gravity center -extent ${width}x${height}"
 #	    centering=
 
+ 	    echo -n "${wideview:+, width-fitted}"
  	    echo -n "${dorotate:+, rotated}"
 	    echo -n "${enhance:+, enhanced}"
 	    echo -n "${dither:+, dithered}"
@@ -1218,11 +1233,12 @@ showimage() {
 	    output=$(${TIME} \
 		convert -background $background -auto-orient ${dorotate} \
 		    $extract \
-		    -$resize "$gt${width}x$gt${height}"  \
+		    -$resize "$geometry"  \
 		    ${enhance:+-channel rgb -auto-level -gamma 1.5} \
 		    +dither ${dither:+-dither floyd-steinberg} \
 		    $centering \
 		    -colors $numcolors \
+		    $crop \
 		    "file://$1[0]" -flatten sixel:-)
 	    # -flatten is needed for transparent PNGs.
 	    ;;
@@ -1232,6 +1248,9 @@ showimage() {
 	    # Note that -sample is faster for large images, but super cruddy.
 	    # 3,000,000 pixels empirically found as where time benefit began.
 	    [[ ImageWidth*ImageHeight -lt 3000000 ]] || resize=sample
+
+	    # Maybe use '>' in geometry so imagemagick doesn't magnify small images. 
+	    local gt="";  [[ -z "$zoomin" ]]  &&  gt=">"
 
 	    output=$(
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
@@ -1557,22 +1576,27 @@ doit () {
 			E "Turning enhanced view on"
 			enhance=yup
 		    fi
+		    # XXX should enhance apply to fast view?
 		    if [[ $currentview != "fast" ]]; then
 			viewmode=$currentview showimage "$f"
 		    fi
 		    ;;
-		w) e "preparing wide view\r"
-		   # Round down to size of a lines of text to avoid gaps 
-		   local -i hdiv=$(((height/fontheight)*fontheight))
-		   convert -geometry ">${width}x" \
-			   -crop ${width}x${hdiv} \
-			   "file://$f[0]" sixel:-
-		   #currentview="wide"
-		   ;;
 		e) e "temporarily showing enhanced view\r"
 		   enhance=yup viewmode=hq showimage "$f"
-		   #currentview=enhanced
 		   ;;
+		W) # Toggle wide view (fit width of image to width of screen)
+		    if [[ "$wideview" ]]; then
+			E "Turning wide view off"
+			wideview=""
+		    else
+			E "Turning wide view on"
+			wideview=yup
+		    fi
+		    viewmode=$currentview showimage "$f"
+		    ;;
+		w) e "temporarily showing wide view\r"
+		   wideview=yup viewmode=hq showimage "$f"
+		    ;;
 		+|=) # Zoom in preview
 		if [[ $currentview == "fast" ]]; then
 		    previewlines=previewlines+1
@@ -1622,7 +1646,7 @@ doit () {
 		       return
 		   fi
 		   ;;
-		W) reverseimagesearch "$f"
+		R) reverseimagesearch "$f"
 		   showimage "$f"
 		   ;;
 		y) yandeximagesearch "$f"
