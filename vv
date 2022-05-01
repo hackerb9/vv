@@ -1178,10 +1178,31 @@ showimage() {
     # would allow us to see more of it on the screen.
     local dorotate=""
 
-    # geometry for ImageMagick's -geometry flag. (Overriden by zoomin and wideview, below).
-    local geometry="${width}x${height}"
+    # Maybe use ">$width" in geometry to disable zooming on tiny images
+    local gt=""
+    if [[ "$zoomin" ]]; then gt=""; else gt=">"; fi
 
-    # crop gets set if "wideview" is on
+    # Centering an image can slow down convert by <200ms. XXX Worth it?
+    local centering="-gravity center -extent ${width}x${height}"
+
+    # geometry for ImageMagick's -geometry flag.
+    local geometry
+    if [[ $viewmode == "wide" ]]; then
+       # Wide view fits image width to screen, but not height
+       geometry="$gt${width}x"
+       # Round crop down to the height of a line of text to avoid gaps 
+       crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
+       # Disable centering's -extent in wide view
+       centering=""
+    else
+	if [[ $viewmode == "fast" ]]; then 
+	    geometry="$gt${width}x${previewsize}"
+	else
+	    geometry="$gt${width}x$gt${height}"
+	fi
+    fi
+
+    # crop gets set in "wide view" mode
     local crop=""
 
     currentview=$viewmode	# Remember last used viewmode.
@@ -1194,8 +1215,8 @@ showimage() {
     debug "OSC 8 URI link goes to $osc8uri"
 
     case $viewmode in
-	hq)	       		       # High Quality and slow. (about 1 second)
-	    e "preparing high quality"
+	hq|wide) 		# High Quality and slow. (about 1 second)
+	    e "preparing $viewmode"
 
 	    # For speed, use ImageMagick's -extract option to load large images.
 	    extract="-extract >${width}x>${height}"
@@ -1203,28 +1224,13 @@ showimage() {
 	    # If antialiasing is off, use -sample to resize the image.
 	    if [[ $aalias ]]; then resize=geometry; else resize=sample; fi
 
-	    if [[ "$bestfit" && ! "$wideview" ]]; then
+	    if [[ "$bestfit" ]]; then
 		dorotate=$(mayberotate "$1")
 		if [[ "$dorotate" ]]; then
 		    extract="-extract >${height}x>${width}"
 		fi
 	    fi
 	    
-	    # Conditionally override the geometry
-	    if [[ "$wideview" ]]; then
-		# Wide view fits image width to screen, but not height
-		geometry=">${width}x"
-		# Round crop down to the height of a line of text to avoid gaps 
-		crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
-	    elif [[ "$zoomin" ]]; then
-		geometry=">${width}x>${height}"
-	    fi
-
-	    # Centering an image can slow down convert by <200ms. Worth it? XXX
-	    local centering="-gravity center -extent ${width}x${height}"
-#	    centering=
-
- 	    echo -n "${wideview:+, wide}"
  	    echo -n "${dorotate:+, rotated}"
 	    echo -n "${enhance:+, enhanced}"
 	    echo -n "${dither:+, dithered}"
@@ -1250,18 +1256,16 @@ showimage() {
 	    [[ ImageWidth*ImageHeight -lt 3000000 ]] || resize=sample
 
 	    # Maybe use '>' in geometry so imagemagick doesn't magnify small images. 
-	    local gt="";  [[ -z "$zoomin" ]]  &&  gt=">"
-
 	    # Default geometry is limited by height of preview lines
-	    local geometry="$gt${width}x${previewsize}"
+#	    local geometry="$gt${width}x${previewsize}"
 
-	    # In wide view, height is unlimited
-	    if [[ "$wideview" ]]; then
-		# Wide view fits image width to screen, but not height
-		geometry=">${width}x"
-		# Round crop down to the height of a line of text to avoid gaps 
-		crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
-	    fi
+	    # # In wide view, height is unlimited [fast & wide diked]
+	    # if [[ "$wideview" ]]; then
+	    # 	# Wide view fits image width to screen, but not height
+	    # 	geometry=">${width}x"
+	    # 	# Round crop down to the height of a line of text to avoid gaps 
+	    # 	crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
+	    # fi
 
 	    output=$(
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
@@ -1536,10 +1540,15 @@ doit () {
 		    fi
 		    showimage "$f"
 		    ;;
-		f) [[ $viewmode == fast ]] && viewmode=hq || viewmode=fast
+		f) [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
 		   E "switching default viewmode to $viewmode."
 		   showimage "$f"
 		   ;;
+		w) [[ $viewmode != wide ]] && viewmode=wide || viewmode=fast
+		   E "switching default viewmode to $viewmode."
+		   showimage "$f"
+		   ;;
+
 		A) # Toggle antialiasing
 		    if [[ "$aalias" ]]; then
 			E "Turning antialiasing off (show pixels when zooming in on small images)"
@@ -1597,19 +1606,6 @@ doit () {
 		e) e "temporarily showing enhanced view\r"
 		   enhance=yup viewmode=hq showimage "$f"
 		   ;;
-		W) # Toggle wide view (fit width of image to width of screen)
-		    if [[ "$wideview" ]]; then
-			E "Turning wide view off"
-			wideview=""
-		    else
-			E "Turning wide view on"
-			wideview=yup
-		    fi
-		     showimage "$f"
-		    ;;
-		w) e "temporarily showing wide view\r"
-		   wideview=yup showimage "$f"
-		    ;;
 		+|=) # Zoom in preview
 		if [[ $currentview == "fast" ]]; then
 		    previewlines=previewlines+1
