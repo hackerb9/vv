@@ -1224,7 +1224,7 @@ showimage() {
 	    local centering="-gravity center -extent ${width}x${height}"
 #	    centering=
 
- 	    echo -n "${wideview:+, width-fitted}"
+ 	    echo -n "${wideview:+, wide}"
  	    echo -n "${dorotate:+, rotated}"
 	    echo -n "${enhance:+, enhanced}"
 	    echo -n "${dither:+, dithered}"
@@ -1240,7 +1240,7 @@ showimage() {
 		    -colors $numcolors \
 		    $crop \
 		    "file://$1[0]" -flatten sixel:-)
-	    # -flatten is needed for transparent PNGs.
+	    # Note: -flatten is needed for transparent PNGs.
 	    ;;
 	fast|*)				    		   # Fast and cruddy
 	    e "preparing fastest preview\r" 		   # About 0.15 seconds
@@ -1252,13 +1252,25 @@ showimage() {
 	    # Maybe use '>' in geometry so imagemagick doesn't magnify small images. 
 	    local gt="";  [[ -z "$zoomin" ]]  &&  gt=">"
 
+	    # Default geometry is limited by height of preview lines
+	    local geometry="$gt${width}x${previewsize}"
+
+	    # In wide view, height is unlimited
+	    if [[ "$wideview" ]]; then
+		# Wide view fits image width to screen, but not height
+		geometry=">${width}x"
+		# Round crop down to the height of a line of text to avoid gaps 
+		crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
+	    fi
+
 	    output=$(
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
 		${TIME} \
 		convert "file://$1[0]" \
-			-$resize "$gt${width}x${previewsize}" \
+			-$resize "$geometry" \
 			+repage -background $background -auto-orient \
 			-flatten +dither -colors $numcolors \
+			$crop \
 			sixel:-
 		echo -en "\e]8;;\e\\" # End OSC 8 URI linking
 		  )
@@ -1266,6 +1278,7 @@ showimage() {
 	    # Note: +repage is needed for images with virtual canvases.
 	    # Note: +dither (disable dither) saves ~200ms sixel creation time.
 	    # Note: -colors 256 saves another ~200ms sixel creation time.
+	    # Note: -crop is used by wideview 
 	    ;;
     esac
     tput el
@@ -1592,10 +1605,10 @@ doit () {
 			E "Turning wide view on"
 			wideview=yup
 		    fi
-		    viewmode=$currentview showimage "$f"
+		     showimage "$f"
 		    ;;
 		w) e "temporarily showing wide view\r"
-		   wideview=yup viewmode=hq showimage "$f"
+		   wideview=yup showimage "$f"
 		    ;;
 		+|=) # Zoom in preview
 		if [[ $currentview == "fast" ]]; then
