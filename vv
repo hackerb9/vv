@@ -1540,13 +1540,20 @@ doit () {
 		    fi
 		    showimage "$f"
 		    ;;
-		f) [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
+		F) [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
 		   E "switching default viewmode to $viewmode."
 		   showimage "$f"
 		   ;;
-		w) [[ $viewmode != wide ]] && viewmode=wide || viewmode=fast
+		f) E "showing fullscreen view once (use 'F' to toggle)"
+		   viewmode=hq showimage "$f"
+		   ;;
+		W) [[ $viewmode != wide ]] && viewmode=wide || viewmode=fast
 		   E "switching default viewmode to $viewmode."
 		   showimage "$f"
+		   ;;
+		w) 
+		   E "showing wide view once"
+		   viewmode=wide showimage "$f"
 		   ;;
 
 		A) # Toggle antialiasing
