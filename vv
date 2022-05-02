@@ -116,7 +116,7 @@ declare -g   dither="y"  # Improve image quality by dithering when viewmode==hq.
 declare -g   aalias="y"  # Smooths jaggies when zooming in on small images. 
 declare -g  enhance=""	 # Lightens dark images with gamma +1.5. Set by (e)
 declare -g   zoomin="y"  # Magnify small images to screen size (slower).
-declare -g wideview=""	 # Fit width of image to width of screen; portrait images scroll off top
+declare -g fitwidth=""	 # Fit width of image to width of screen; portrait images scroll off top
 
 # Defaults if terminal autodetection fails.
 declare -gi numcolors=16		# Num colors the terminal can show.
@@ -1187,12 +1187,12 @@ showimage() {
 
     # geometry for ImageMagick's -geometry flag.
     local geometry
-    if [[ $viewmode == "wide" ]]; then
-       # Wide view fits image width to screen, but not height
+    if [[ $viewmode == "width" ]]; then
+       # fit width fits image width to screen, but not height
        geometry="$gt${width}x"
        # Round crop down to the height of a line of text to avoid gaps 
        crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
-       # Disable centering's -extent in wide view
+       # Disable centering's -extent in fit width
        centering=""
     else
 	if [[ $viewmode == "fast" ]]; then 
@@ -1202,7 +1202,7 @@ showimage() {
 	fi
     fi
 
-    # crop gets set in "wide view" mode
+    # crop gets set in "fit width" mode
     local crop=""
 
     currentview=$viewmode	# Remember last used viewmode.
@@ -1215,7 +1215,7 @@ showimage() {
     debug "OSC 8 URI link goes to $osc8uri"
 
     case $viewmode in
-	hq|wide) 		# High Quality and slow. (about 1 second)
+	hq|width) 		# High Quality and slow. (about 1 second)
 	    e "preparing $viewmode"
 
 	    # For speed, use ImageMagick's -extract option to load large images.
@@ -1259,9 +1259,9 @@ showimage() {
 	    # Default geometry is limited by height of preview lines
 #	    local geometry="$gt${width}x${previewsize}"
 
-	    # # In wide view, height is unlimited [fast & wide diked]
-	    # if [[ "$wideview" ]]; then
-	    # 	# Wide view fits image width to screen, but not height
+	    # # In fit width, height is unlimited [fast & width diked]
+	    # if [[ "$fitwidth" ]]; then
+	    # 	# fit width fits image width to screen, but not height
 	    # 	geometry=">${width}x"
 	    # 	# Round crop down to the height of a line of text to avoid gaps 
 	    # 	crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
@@ -1282,7 +1282,7 @@ showimage() {
 	    # Note: +repage is needed for images with virtual canvases.
 	    # Note: +dither (disable dither) saves ~200ms sixel creation time.
 	    # Note: -colors 256 saves another ~200ms sixel creation time.
-	    # Note: -crop is used by wideview 
+	    # Note: -crop is used by fitwidth 
 	    ;;
     esac
     tput el
@@ -1475,6 +1475,13 @@ doit () {
 		#		       sleep 0.25; flushstdin # Slow down deletes
 		#		       continue 2
 		#		       ;;
+		f) E "fitting to full screen once (use 'F' to toggle)"
+		   viewmode=hq showimage "$f"
+		   ;;
+		F) [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
+		   E "switching default viewmode to $viewmode."
+		   showimage "$f"
+		   ;;
 		v) if [[ $FrameCount -le 1 ]]; then
 		       # Temporarily use highquality mode.
 		       if [[ $currentview != hq ]]; then
@@ -1491,11 +1498,19 @@ doit () {
 		   sixvid "$f"
 		   flushstdin
 		   ;;
+		w) E "Fitting to screen width once (use 'W' to toggle)"
+		   viewmode=width showimage "$f"
+		   ;;
+		W) [[ $viewmode != width ]] && viewmode=width || viewmode=fast
+		   E "switching default viewmode to $viewmode."
+		   showimage "$f"
+		   ;;
+
 		M) e "Playing video\r"
 		   mpv -loop "$f" || animate "$f"
 		   flushstdin
 		   ;;
-		b) e "Back not implemented yet\r"
+		b|$'\c?'|$'\cH') E "Back not implemented yet"
 		   # b reserved for "back" once we implement it.
 		   ;;
 
@@ -1540,22 +1555,6 @@ doit () {
 		    fi
 		    showimage "$f"
 		    ;;
-		F) [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
-		   E "switching default viewmode to $viewmode."
-		   showimage "$f"
-		   ;;
-		f) E "showing fullscreen view once (use 'F' to toggle)"
-		   viewmode=hq showimage "$f"
-		   ;;
-		W) [[ $viewmode != wide ]] && viewmode=wide || viewmode=fast
-		   E "switching default viewmode to $viewmode."
-		   showimage "$f"
-		   ;;
-		w) 
-		   E "showing wide view once"
-		   viewmode=wide showimage "$f"
-		   ;;
-
 		A) # Toggle antialiasing
 		    if [[ "$aalias" ]]; then
 			E "Turning antialiasing off (show pixels when zooming in on small images)"
@@ -1696,14 +1695,14 @@ showcommonkeys() {
 MOST USEFUL KEYS:
 
     SPACE: skip to next image.
-    v: view the current image as full-size; also plays videos.
-    f: toggle between fast image previews and full-size, higher quality images.
+    f: view just the current image as full-size, higher quality.
+    F: toggle between always showing full-size images and fast previews.
+    v: Plays video using sixel (no sound).
     +/-/0: increase/decrease/reset preview size.
     d: trash image (also try 'gio list trash:' and 'gio trash --empty')
     u: undo previous trash (can be used multiple times)
     r: rename image.
     s: save a copy of the image to another directory or filename.
-    S: slide show (full-size, every $ssdelay seconds).
     q: quit.
     H: SHOW ADVANCED KEYS.
 
@@ -1713,19 +1712,21 @@ showadvancedkeys() {
     cat  <<EOF
 ADVANCED KEYS
 
+    w: fit width of current image (allow tall images to scroll off screen).
+    W: toggle between always fitting width and fast previews.
     i: display basic image info (filename, type, geometry, filesize)
     I: verbosely show all image metadata (EXIF, IPTC, etc.)
     c: display comments and image size.
     C: edit image comment.
-    B: toggle best fit on/off (autorotate portrait image to landscape screen).
-    D: toggle dither on (visually smoother) or off (loads faster).
+    R: reverse image search. Uses w3m text browser by default.
+    S: slide show (full-size, every $ssdelay seconds).
     e: enhanced view just this image (improves contrast and brightness).
     E: toggle enhance on/off  (currently auto-level and gamma +1.5).
-    w: wide view (fit width, but allow tall images to scroll off screen).
+    D: toggle dither on (visually smoother) or off (loads faster).
     1: 100% zoom. 1 to 1, screen to image pixels. (Crops large images).
     Z: toggle zooming small images up to the size of the screen.
     A: toggle antialias when zooming in on small images.
-    W: Web search for this image. Uses w3m text browser by default.
+    B: toggle best fit on/off (autorotate portrait image to landscape screen).
     x: exit directory (pops up one level of recursion).
     X: exit all directories (pops up to top level directory).
     h: help (SHOW MOST COMMON KEYS) 
