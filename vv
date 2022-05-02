@@ -1617,7 +1617,14 @@ doit () {
 		e) e "temporarily showing enhanced view\r"
 		   enhance=yup viewmode=hq showimage "$f"
 		   ;;
-		+|=) # Zoom in preview
+		=) # Set preview size to specific number
+		if [[ $currentview == "fast" ]]; then
+		    previewlines=previewlines+1
+		    windowchange
+		    e "Preview lines changed to $previewlines"
+		fi
+		;;
+		+) # Zoom in preview
 		if [[ $currentview == "fast" ]]; then
 		    previewlines=previewlines+1
 		    windowchange
