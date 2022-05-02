@@ -116,7 +116,6 @@ declare -g   dither="y"  # Improve image quality by dithering when viewmode==hq.
 declare -g   aalias="y"  # Smooths jaggies when zooming in on small images. 
 declare -g  enhance=""	 # Lightens dark images with gamma +1.5. Set by (e)
 declare -g   zoomin="y"  # Magnify small images to screen size (slower).
-declare -g fitwidth=""	 # Fit width of image to width of screen; portrait images scroll off top
 
 # Defaults if terminal autodetection fails.
 declare -gi numcolors=16		# Num colors the terminal can show.
@@ -1330,7 +1329,7 @@ showprompt() {
 	if [[ FrameCount -gt 1 ]]; then
 	    echo -n "'v' for video, "
 	elif [[ $currentview != hq ]]; then
-	    echo -n "'v' to view, "
+	    echo -n "'f' for full, "
 	fi		
 	echo -n "'h' for help, 'q' to quit."
 	tput el
@@ -1483,7 +1482,7 @@ doit () {
 		   showimage "$f"
 		   ;;
 		v) if [[ $FrameCount -le 1 ]]; then
-		       # Temporarily use highquality mode.
+		       # Just a single image, so temporarily use highquality mode.
 		       if [[ $currentview != hq ]]; then
 			   viewmode=hq showimage "$f"
 		       fi
@@ -1701,7 +1700,8 @@ MOST USEFUL KEYS:
     +/-/0: increase/decrease/reset preview size.
     d: trash image (also try 'gio list trash:' and 'gio trash --empty')
     u: undo previous trash (can be used multiple times)
-    r: rename image.
+    r: rename image file.
+    m: move image file to another directory.
     s: save a copy of the image to another directory or filename.
     q: quit.
     H: SHOW ADVANCED KEYS.
@@ -1712,7 +1712,7 @@ showadvancedkeys() {
     cat  <<EOF
 ADVANCED KEYS
 
-    w: fit width of current image (allow tall images to scroll off screen).
+    w: fit width of current image (tall images to scroll off screen).
     W: toggle between always fitting width and fast previews.
     i: display basic image info (filename, type, geometry, filesize)
     I: verbosely show all image metadata (EXIF, IPTC, etc.)
