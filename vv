@@ -1474,18 +1474,30 @@ doit () {
 		#		       sleep 0.25; flushstdin # Slow down deletes
 		#		       continue 2
 		#		       ;;
-		f) E "fitting to full screen once (use 'F' to toggle)"
+
+		f) E "Fitting to full size once ('F' to always fit)"
 		   viewmode=hq showimage "$f"
 		   ;;
-		F) [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
-		   E "switching default viewmode to $viewmode."
-		   showimage "$f"
+		F) # Toggle hq/fast view mode.
+	           [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
+		   E "Switching default viewmode to $viewmode."
+		   if [[ $currentview != $viewmode ]]; then
+		       showimage "$f"
+		   fi
+		   ;;
+		w) E "Fitting to screen width once ('W' for always)"
+		   viewmode=width showimage "$f"
+		   ;;
+		W) # Toggle fitwidth/fast view mode.
+		   [[ $viewmode != width ]] && viewmode=width || viewmode=fast
+		   E "Switching default viewmode to $viewmode."
+		   if [[ $currentview != $viewmode ]]; then
+		       showimage "$f"
+		   fi
 		   ;;
 		v) if [[ $FrameCount -le 1 ]]; then
 		       # Just a single image, so temporarily use highquality mode.
-		       if [[ $currentview != hq ]]; then
-			   viewmode=hq showimage "$f"
-		       fi
+		       viewmode=hq showimage "$f"
 		   else
 		       # Allow lowercase 'v' for files we detect as videos.
 		       e "Playing video\r"
@@ -1497,15 +1509,9 @@ doit () {
 		   sixvid "$f"
 		   flushstdin
 		   ;;
-		w) E "Fitting to screen width once (use 'W' to toggle)"
-		   viewmode=width showimage "$f"
-		   ;;
-		W) [[ $viewmode != width ]] && viewmode=width || viewmode=fast
-		   E "switching default viewmode to $viewmode."
-		   showimage "$f"
-		   ;;
 
 		M) e "Playing video\r"
+		   # Undocumented for now. Should this use xdg-open? 
 		   mpv -loop "$f" || animate "$f"
 		   flushstdin
 		   ;;
