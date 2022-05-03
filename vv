@@ -1619,14 +1619,27 @@ doit () {
 		   ;;
 		=) # Set preview size to specific number
 		if [[ $currentview == "fast" ]]; then
-		    previewlines=previewlines+1
-		    windowchange
-		    e "Preview lines changed to $previewlines"
+		    stty echo		 # Temporarily show characters the user types.
+		    tput cnorm		 # Temporarily show the cursor.
+		    echo -en "\r"; tput el	# Clear line for prompt. 
+		    IFS= read -e -r -p "Height of preview in lines [$previewlines] ? "
+		    tput civis
+		    stty -echo
+
+		    if [[ "$REPLY" -le 0 || "$REPLY" -eq $previewlines ]]; then
+			E "Preview lines unchanged"
+		    else
+			[[ "$REPLY" -lt $LINES ]] || REPLY=$((LINES-2)) 	# Max is #rows - 2
+			previewlines=$REPLY
+			E "Preview lines changed to $previewlines"
+			windowchange
+		    fi
 		fi
 		;;
 		+) # Zoom in preview
 		if [[ $currentview == "fast" ]]; then
 		    previewlines=previewlines+1
+		    [[ previewlines -le $((LINES-2)) ]] || previewlines=$((LINES-2))
 		    windowchange
 		    e "Preview lines changed to $previewlines"
 		fi
