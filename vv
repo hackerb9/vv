@@ -1268,7 +1268,6 @@ showimage() {
 		    "file://$1[0]" \
 		    $flatten \
 		    sixel:-)
-	    echo
 	    ;;
 	fast|*)				    		   # Fast and cruddy
 	    e "preparing fastest preview\r" 		   # About 0.15 seconds
