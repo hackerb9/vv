@@ -1184,15 +1184,24 @@ showimage() {
     # Centering an image can slow down convert by <200ms. XXX Worth it?
     local centering="-gravity center -extent ${width}x${height}"
 
+    # crop gets set in "fit width" mode
+    local crop=""
+
+    # -flatten is needed for transparent PNGs, 
+    # but interferes with fitwidth's -crop option.
+    local flatten="-flatten"
+
     # geometry for ImageMagick's -geometry flag.
     local geometry
     if [[ $viewmode == "width" ]]; then
        # fit width fits image width to screen, but not height
        geometry="$gt${width}x"
        # Round crop down to the height of a line of text to avoid gaps 
-       crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
-       # Disable centering's -extent in fit width
+       crop="-crop x$(( (height/fontheight) * fontheight ))"
+       # Disable centering's -extent
        centering=""
+       # Disable flattening multiple layers
+       flatten=""
     else
 	if [[ $viewmode == "fast" ]]; then 
 	    geometry="$gt${width}x${previewsize}"
@@ -1200,9 +1209,6 @@ showimage() {
 	    geometry="$gt${width}x$gt${height}"
 	fi
     fi
-
-    # crop gets set in "fit width" mode
-    local crop=""
 
     currentview=$viewmode	# Remember last used viewmode.
 
@@ -1239,13 +1245,15 @@ showimage() {
 		convert -background $background -auto-orient ${dorotate} \
 		    $extract \
 		    -$resize "$geometry"  \
+		    $crop \
 		    ${enhance:+-channel rgb -auto-level -gamma 1.5} \
 		    +dither ${dither:+-dither floyd-steinberg} \
 		    $centering \
 		    -colors $numcolors \
-		    $crop \
-		    "file://$1[0]" -flatten sixel:-)
-	    # Note: -flatten is needed for transparent PNGs.
+		    "file://$1[0]" \
+		    $flatten \
+		    sixel:-)
+	    echo
 	    ;;
 	fast|*)				    		   # Fast and cruddy
 	    e "preparing fastest preview\r" 		   # About 0.15 seconds
