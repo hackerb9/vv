@@ -1254,18 +1254,6 @@ showimage() {
 	    # 3,000,000 pixels empirically found as where time benefit began.
 	    [[ ImageWidth*ImageHeight -lt 3000000 ]] || resize=sample
 
-	    # Maybe use '>' in geometry so imagemagick doesn't magnify small images. 
-	    # Default geometry is limited by height of preview lines
-#	    local geometry="$gt${width}x${previewsize}"
-
-	    # # In fit width, height is unlimited [fast & width diked]
-	    # if [[ "$fitwidth" ]]; then
-	    # 	# fit width fits image width to screen, but not height
-	    # 	geometry=">${width}x"
-	    # 	# Round crop down to the height of a line of text to avoid gaps 
-	    # 	crop="-crop ${width}x$(( (height/fontheight) * fontheight ))"
-	    # fi
-
 	    output=$(
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
 		${TIME} \
