@@ -1723,7 +1723,7 @@ MOST USEFUL KEYS:
     f: view just the current image as full-size, higher quality.
     F: toggle between always showing full-size images and fast previews.
     v: Plays video using sixel (no sound).
-    +/-/0: increase/decrease/reset preview size.
+    +/-/0/=: increase/decrease/reset/set fast preview size.
     d: trash image (also try 'gio list trash:' and 'gio trash --empty')
     u: undo previous trash (can be used multiple times)
     r: rename image file.
