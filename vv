@@ -1258,8 +1258,9 @@ showimage() {
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
 		${TIME} \
 		convert "file://$1[0]" \
+			-auto-orient \
 			-$resize "$geometry" \
-			+repage -background $background -auto-orient \
+			+repage -background $background \
 			-flatten +dither -colors $numcolors \
 			$crop \
 			sixel:-
@@ -1463,7 +1464,7 @@ doit () {
 		#		       continue 2
 		#		       ;;
 
-		f) E "Fitting to full size once ('F' to always fit)"
+		f) E "Fitting to full size once ('F' for always)"
 		   viewmode=hq showimage "$f"
 		   ;;
 		F) # Toggle hq/fast view mode.
