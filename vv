@@ -737,6 +737,7 @@ sidebyside() {
     # Show two images side by side for quick comparison.
     local -i half=width/2
     montage -background $background -fill $foreground \
+	    -auto-orient \
 	    -geometry ">${half}x>$((height-fontheight))" \
 	    -label "$1" "$1" -label "$2" "$2" sixel:-
     viewmode=ss
