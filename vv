@@ -14,14 +14,14 @@
 # * Shows everything in the current working directory by default.
 # * Loads directories recursively (default: ask;  -r: always;  -R: never).
 # * Scales down large images to fit within terminal.
+# * Defaults to fast viewing [-F] to quickly preview and delete (d) images,
+#	or use [-f] to default to full-size (slower, high quality) view.
+# * Hit (f) to view full-size (slower, high quality) for current image only,
+#       or use (F) to toggle between fast and full-size viewing mode.
+# * Preview size can be increased (+), decreased (-), set (=), or reset (0).
 # * Supports "fit width" (w) mode; portrait pictures scroll vertically.
 # * Can view at "100% zoom" (1). Cuts large picture into pieces, if necessary.
 # * Has "best fit" (B), autorotate to use as much of the screen as possible.
-# * Defaults to fast viewing [-F] to quickly preview and delete (d) images,
-#	or use [-f] to default to full-size (slower, highquality) view.
-# * Hit (v) to view full-size (slower, highquality) for current image only,
-#       or use (f) to toggle between fast and full-size viewing mode.
-# * Preview size can be increased (+), decreased (-), or reset (0).
 # * Deleted (d) images are moved to Trashcan (Freedesktop standard).
 # * Can undo (u) last trashed file.
 # * Reverse image search using w3m (R). (Currently scrapes yandex).
@@ -35,7 +35,7 @@
 # * Resizes current image when terminal resizes. (SIGWINCH).
 # * Pixel height of preview is a multiple of the current text font height,
 #   so previews should be the right size no matter your screen resolution. 
-# * Pixel width of preview is always the full width of the terminal.
+# * Pixel width of preview can use the full width of the terminal.
 # * View videos (v) such as animated GIFs. (Requires 'sixvid' and ffmpeg).
 # * Icons and small images can be zoomed in to screen size. (z to toggle).
 # * Breadth first search. Images in current dir are shown before subdirs.
@@ -60,8 +60,7 @@
 # 	is a single keystroke. (Note, undeletion is also a single key).
 #
 # Design:
-
-
+#
 #	This should feel like a command-line program that just happens
 # 	to have graphics. In particular, it should *NOT* take over the
 # 	whole screen.
@@ -76,28 +75,38 @@
 #	The most frequently used functions are on the home row. 
 #	Less common functions may include shift. 
 #
-#	As much as possible, reduce repetitive work. 
+#	As much as possible, reduce repetitive work. (Temporal locality.)
 #
-#	Go as fast as possible, trading off quality if necessary. 
-
+#	Go as fast as possible, trading off quality if necessary.
+#
+#	Should work even over a laggy ssh connection with a vintage VT340.
+#	
+# 	Unix keys ^C, ^Z, ^W, ^L act reasonably and do not mess up the terminal.
+#
+#	The user isn't a dummy, don't hide info merely to seem simple.
+# 
 #	Reduce cognitive load:
 #
-#	User shouldn't have to memorize which boolean flags have been flipped. 
-#	Show status everytime an image is displayed. 
+#	* User shouldn't have to memorize which boolean flags are set. 
+#	  Show status every time an image is displayed. 
 #	
-#	Help should not be overwhelming. Give just the most salient
-#	bits, with ways the user can ask for more help.
+#	* Help should not be overwhelming. Give just the most salient
+#	  bits, with ways the user can ask for more help.
+#
+#	* "Don't make me read." As much as possible, make the state
+#	  predictable so an expert could type keys without seeing the
+#	  prompts and know exactly how vv will react. (Note: This is
+#	  the opposite of current touch screen interfaces).
+#
 
-
-
-# 
+#
 # For more info or to report a bug, please see 
 # https://github.com/hackerb9/vv
 
 # Defaults you can change. 
 declare -g  timeout=0.25       # Max secs to wait for control sequence response.
 declare -gi ssdelay=5	       # Num secs to linger during slideshow. 
-declare -g  viewmode="fast"    # Show "fast" or "hq" (high quality) images.
+declare -g  viewmode="fast"    # Show "fast" or "full" images.
 declare -gi previewlines=8      # Height of fast preview image (in text lines).
 declare -g  background="gray20" # Default for bg (alpha) if autodetection fails
 declare -g  foreground="gray80" # Default for fg (text) if autodetection fails
@@ -112,7 +121,7 @@ declare -g  shownotices="y"	# Show optional messages.("Install X to get Y").
 # Defaults for image processing flags. Note that opposite of "y" is "", not "n".
 # To disable, set to empty string. To enable, set to any string.
 declare -g  bestfit=""   # Rotate images automatically to fit better on screen.
-declare -g   dither="y"  # Improve image quality by dithering when viewmode==hq.
+declare -g   dither="y"  # Improve image quality by dithering if viewmode==full.
 declare -g   aalias="y"  # Smooths jaggies when zooming in on small images. 
 declare -g  enhance=""	 # Lightens dark images with gamma +1.5. Set by (e)
 declare -g   zoomin="y"  # Magnify small images to screen size (slower).
@@ -168,14 +177,14 @@ With no arguments, searches current directory for images.
 
   -r, --recursive[=yes|ask]	# Search image directories recursively [ask].
   -R, --recursive=no		# Do not search sub directories recursively.
-  -f, --full    		# View images full-size (max ${width}x${height}).
-  -F, --fast			# View fast ${width}x${previewsize} previews [DEFAULT].
-  -B, --best-fit		# Like -f, but rotate to maximize pixel usage.
+  -f, --full    		# View images full-size of terminal (${width}x${height}).
+  -F, --fast			# View fast ${previewlines} line high previews [DEFAULT].
+  -B, --best-fit		# Like full, but rotate to maximize pixel usage.
   -S, --slideshow[=DELAY]	# Change images every $ssdelay seconds. 
   -n, --num-colors=N		# Set max colors. (Currently: $numcolors).
   -g, --geometry=WIDTHxHEIGHT	# Set screen width, height in pixels. (${width}x${height}).
   -P, --preview-size=PIXELS	# Set height of previews (pixels). (${previewsize}).
-  -p, --preview-lines=LINES	# Same but specify in lines of text. ($previewlines).
+  -p, --preview-lines=LINES	# Same, but specify in lines of text. ($previewlines).
   -a, --antialias		# Enable smoothing when resizing image [DEFAULT].
   -A, --no-antialias		# Disable smoothing, show pixels as sharp.
   -?, --help			
@@ -391,7 +400,7 @@ windowchange() {
     fi
     debug "preview size is ${width}x${previewsize} pixels"
 
-    if [[ "$viewmode" == hq  ||  "$currentview" == hq ]]; then
+    if [[ "$viewmode" == full  ||  "$currentview" == full ]]; then
 	SHOULDREDRAW=yup		# Redraw the current image
     fi
 }
@@ -1158,10 +1167,16 @@ fakefile() {
 showimage() {
     # Shows the file named in $1 using sixel.
 
-    # $viewmode is either "hq", which uses this ImageMagick to
-    # make the image look good, or it is "fast" which scales the image
-    # down using ImageMagick and removes colors for the fastest
-    # preview.
+    # Global variable $viewmode is either "full", which enlarges it to
+    # the full size of the terminal window, or it is "fast", which
+    # scales the image down, removes colors, and takes other shortcuts
+    # for the fastest preview.
+
+    # Note that "full size" is not exactly the same as "full screen".
+    # In a terminal emulator, the sixel graphics are just a window.
+    # However, if the terminal emulator is then maximized (F11 key, often),
+    # vv will automatically rescale the image to use the entire space,
+    # minus two lines for the title and prompt.
 
     [[ "$1" ]] || echo "Error, showimage() called without filename">&2
 
@@ -1220,7 +1235,7 @@ showimage() {
     debug "OSC 8 URI link goes to $osc8uri"
 
     case $viewmode in
-	hq|width) 		# High Quality and slow. (about 1 second)
+	full|width) 		# Large, high quality and slow. (about 1 second)
 	    e "preparing $viewmode"
 
 	    # For speed, use ImageMagick's -extract option to load large images.
@@ -1325,7 +1340,7 @@ showprompt() {
 	echo -n "Press space to keep, 'd' to delete, "
 	if [[ FrameCount -gt 1 ]]; then
 	    echo -n "'v' for video, "
-	elif [[ $currentview != hq ]]; then
+	elif [[ $currentview != full ]]; then
 	    echo -n "'f' for full, "
 	fi		
 	echo -n "'h' for help, 'q' to quit."
@@ -1473,10 +1488,10 @@ doit () {
 		#		       ;;
 
 		f) E "Fitting to full size once ('F' for always)"
-		   viewmode=hq showimage "$f"
+		   viewmode=full showimage "$f"
 		   ;;
-		F) # Toggle hq/fast view mode.
-	           [[ $viewmode != hq ]] && viewmode=hq || viewmode=fast
+		F) # Toggle full/fast view mode.
+	           [[ $viewmode != full ]] && viewmode=full || viewmode=fast
 		   E "Switching default viewmode to $viewmode."
 		   if [[ $currentview != $viewmode ]]; then
 		       showimage "$f"
@@ -1493,8 +1508,8 @@ doit () {
 		   fi
 		   ;;
 		v) if [[ $FrameCount -le 1 ]]; then
-		       # Just a single image, so temporarily use highquality mode.
-		       viewmode=hq showimage "$f"
+		       # Just a single image, so temporarily use full mode.
+		       viewmode=full showimage "$f"
 		   else
 		       # Allow lowercase 'v' for files we detect as videos.
 		       e "Playing video\r"
@@ -1553,7 +1568,7 @@ doit () {
 			E "Slide show mode. Hit 'p' to pause, 'Escape' to stop."
 			slideshow="yup"
 			oldvmss=$viewmode
-			viewmode="hq"
+			viewmode="full"
 		    fi
 		    showimage "$f"
 		    ;;
@@ -1579,12 +1594,12 @@ doit () {
 			    E "Turning best fit on (autorotate large landscape images to fit portrait screen)"
 			fi
 			bestfit=yup
-			viewmode=hq
+			viewmode=full
 		    fi
 		    showimage "$f"
 		    ;;
 		$'\cb') # Rotate this one image to fit the screen.
-		    bestfit=yup viewmode=hq showimage "$f"
+		    bestfit=yup viewmode=full showimage "$f"
 		    ;;
 		D) # Toggle dither
 		    if [[ "$dither" ]]; then
@@ -1612,7 +1627,7 @@ doit () {
 		    fi
 		    ;;
 		e) e "temporarily showing enhanced view\r"
-		   enhance=yup viewmode=hq showimage "$f"
+		   enhance=yup viewmode=full showimage "$f"
 		   ;;
 		=) # Set preview size to specific number
 		if [[ $currentview == "fast" ]]; then
@@ -1766,7 +1781,7 @@ dotfordot() {
     local f="$1"
     if [[  $w -le $width  &&  $h -le $height  ]]; then
 	# Trivial case: image is small, so just show it.
-	viewmode=hq showimage "$f"
+	viewmode=full showimage "$f"
 	return
     fi
 
@@ -1804,6 +1819,7 @@ max() {
 
 declare -gi throbidx=0		# Static index for throbber[]
 throb() {
+    # A spinning doohickey while recursively scanning directories.
     local -a throbber=('/' '-' '\' '|')
     echo -n "${throbber[throbidx++]}"
     echo -n $'\b'
@@ -2286,7 +2302,7 @@ while true; do
 	    ;;
 	-f|--full*)
 	    echo 'Full screen mode (slower, better quality)'
-	    viewmode="hq"
+	    viewmode="full"
 	    shift
 	    continue
 	    ;;
@@ -2299,14 +2315,14 @@ while true; do
 	-B|--best-fit)
 	    echo "Best-fit (full screen, auto-rotate to maximize screen usage)"
 	    bestfit="yup"
-	    viewmode="hq"
+	    viewmode="full"
 	    shift
 	    continue
 	    ;;
 	-S|--slide-show|--slideshow)
 	    slideshow=yup
 	    oldvmss=fast
-	    viewmode=hq
+	    viewmode=full
 	    case "$2" in
 		'')		# No optional argument, so do nothing special.
 		    true
