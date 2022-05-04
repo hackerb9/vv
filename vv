@@ -252,7 +252,7 @@ prerequisites() {
     if ! command -v fmt >/dev/null; then
 	fmt() { cat ; }	   # Only needed for wrapping long comments
     fi
-    if ! command -v pdfinfoo >/dev/null; then
+    if ! command -v pdfinfo >/dev/null; then
 	pdfinfo() {
 	    notice "Page count is slow. Please install pdfinfo (poppler-utils)."
 	    echo "Pages: $(identify "$1" | grep -c PDF)"
