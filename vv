@@ -315,6 +315,9 @@ autodetect() {
 
     # Make terminfo keys valid so we can catch arrow keys.
     inittermkey
+
+    # Configure readline for input with 'read -e'
+    configreadline
 }
 
 getbg() {
@@ -553,6 +556,18 @@ inittermkey() {
     fi
 }
 
+configreadline() {
+    # Configure input from the user so that 'read -e' (readline) works.
+    # Note, bind will complain that "line editing is not enabled", but
+    # we toss that spurious warning in /dev/null.
+
+    # Editing happens on only one line of text, scrolling horizontally.
+    bind "set horizontal-scroll-mode on" 2>/dev/null
+    
+    # XXX If I knew how to disable readline adding a space after
+    # filename completion I would do so here. (See saverenamemove()).
+}
+
 parseescape() {
     # Parse terminal escape sequence for F-keys, arrows.
     # Read all the characters following an escape key has been hit
@@ -644,10 +659,15 @@ saverenamemove() {
     else 
 	read -d $'\r' -p "Move to: " -e -i "$(tildify "${lastuseddir:-$dir}/")" newname
     fi
-    tput civis
-    stty -echo
+    tput civis			# Hide cursor.
+    stty -echo			# Hide input keys.
 
     newname=${newname/#~\//$HOME/} 	   # untildify (for realpath.)
+
+    # Remove trailing space from tab completion.
+    if [[  "${newname}" =~ (.*[^ ])([ ]+)$  ]]; then
+	newname="${BASH_REMATCH[1]}"
+    fi
 
     if [[ $mode == "save" || $mode == "move" ]]; then
 	[[ "$newname" == /* ]] || newname="$dir/$newname" # Make path absolute.
@@ -765,8 +785,8 @@ editproperty() {
     stty echo		 # Temporarily show characters the user types.
     tput cnorm		 # Temporarily show the cursor.
     IFS= read -d $'\r' -e -i "$property" -p "$prompt" newproperty
-    tput civis
-    stty -echo
+    tput civis		 # Hide cursor.
+    stty -echo		 # Hide input keys.
 
     if [[ "$newproperty" == "$property" || -z "$newproperty" ]]; then
 	E "$propname editing cancelled."
