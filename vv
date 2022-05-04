@@ -34,7 +34,7 @@
 # * Should work on true DEC hardware (e.g., VT340).
 # * Resizes current image when terminal resizes. (SIGWINCH).
 # * Pixel height of preview is a multiple of the current text font height,
-#   so previews should be the right size no matter your screen resolution. 
+#   so previews should be the right size no matter your screen resolution.
 # * Pixel width of preview can use the full width of the terminal.
 # * View videos (v) such as animated GIFs. (Requires 'sixvid' and ffmpeg).
 # * Icons and small images can be zoomed in to screen size. (z to toggle).
@@ -55,41 +55,41 @@
 # * poppler-utils (for pdfinfo to count pages in PDF files)
 
 # Note: This is designed mainly for quickly previewing, deleting,
-# 	and renaming images over an ssh connection. For that reason,
-# 	fast, small, low-quality images are emphasized and deletion
-# 	is a single keystroke. (Note, undeletion is also a single key).
+#	and renaming images over an ssh connection. For that reason,
+#	fast, small, low-quality images are emphasized and deletion
+#	is a single keystroke. (Note, undeletion is also a single key).
 #
 # Design:
 #
 #	This should feel like a command-line program that just happens
-# 	to have graphics. In particular, it should *NOT* take over the
-# 	whole screen.
+#	to have graphics. In particular, it should *NOT* take over the
+#	whole screen.
 #
-# 	Current work is appended at the bottom. Old images should
+#	Current work is appended at the bottom. Old images should
 #	scroll off the top.
 #
-#  	Keep hands on home row. Allow harder to reach keys -- like Esc
-#  	and arrows -- only as aliases for easier to hit keys.
+#	Keep hands on home row. Allow harder to reach keys -- like Esc
+#	and arrows -- only as aliases for easier to hit keys.
 #
 #	Common functions are mapped to a single key, without shift.
-#	The most frequently used functions are on the home row. 
-#	Less common functions may include shift. 
+#	The most frequently used functions are on the home row.
+#	Less common functions may include shift.
 #
 #	As much as possible, reduce repetitive work. (Temporal locality.)
 #
 #	Go as fast as possible, trading off quality if necessary.
 #
 #	Should work even over a laggy ssh connection with a vintage VT340.
-#	
-# 	Unix keys ^C, ^Z, ^W, ^L act reasonably and do not mess up the terminal.
+#
+#	Unix keys ^C, ^Z, ^W, ^L act reasonably and do not mess up the terminal.
 #
 #	The user isn't a dummy, don't hide info merely to seem simple.
-# 
+#
 #	Reduce cognitive load:
 #
-#	* User shouldn't have to memorize which boolean flags are set. 
-#	  Show status every time an image is displayed. 
-#	
+#	* User shouldn't have to memorize which boolean flags are set.
+#	  Show status every time an image is displayed.
+#
 #	* Help should not be overwhelming. Give just the most salient
 #	  bits, with ways the user can ask for more help.
 #
@@ -100,17 +100,17 @@
 #
 
 #
-# For more info or to report a bug, please see 
+# For more info or to report a bug, please see
 # https://github.com/hackerb9/vv
 
-# Defaults you can change. 
+# Defaults you can change.
 declare -g  timeout=0.25       # Max secs to wait for control sequence response.
-declare -gi ssdelay=5	       # Num secs to linger during slideshow. 
+declare -gi ssdelay=5	       # Num secs to linger during slideshow.
 declare -g  viewmode="fast"    # Show "fast" or "full" images.
 declare -gi previewlines=8      # Height of fast preview image (in text lines).
 declare -g  background="gray20" # Default for bg (alpha) if autodetection fails
 declare -g  foreground="gray80" # Default for fg (text) if autodetection fails
-declare -g  rflag="ask"		# Empty string means do not recurse dirs. 
+declare -g  rflag="ask"		# Empty string means do not recurse dirs.
 declare -g  sortorder="-v"	# `ls` flag to sort files in "natural" order.
 #declare -g  sortorder="-tru"	# `ls` flag to sort files. Least recent viewed.
 #declare -g  sortorder="-t"	# `ls` flag to sort files. Most recent changed.
@@ -122,7 +122,7 @@ declare -g  shownotices="y"	# Show optional messages.("Install X to get Y").
 # To disable, set to empty string. To enable, set to any string.
 declare -g  bestfit=""   # Rotate images automatically to fit better on screen.
 declare -g   dither="y"  # Improve image quality by dithering if viewmode==full.
-declare -g   aalias="y"  # Smooths jaggies when zooming in on small images. 
+declare -g   aalias="y"  # Smooths jaggies when zooming in on small images.
 declare -g  enhance=""	 # Lightens dark images with gamma +1.5. Set by (e)
 declare -g   zoomin="y"  # Magnify small images to screen size (slower).
 
@@ -131,7 +131,7 @@ declare -gi numcolors=16		# Num colors the terminal can show.
 declare -gi defaultwidth=800 defaultheight=480	# Default sixel screen size.
 
 # Global variables
-declare -gi  LINES COLUMNS 	# Screen width and height in rows, cols of text.
+declare -gi  LINES COLUMNS	# Screen width and height in rows, cols of text.
 declare -gi  width height	# Screen width and height in pixels.
 declare -gi  fontheight		# Height of terminal's font in pixels.
 declare -gi  previewsize=0	# Height of preview in pixels. (C.f., previewlines, above)
@@ -160,7 +160,7 @@ cleanup() {
     stty -F/dev/tty echo	# Reset terminal to show input characters.
     stty -F/dev/tty icanon	# Allow backspace to work again.
     stty -F/dev/tty sane	# For bash 4.4's SIGWINCH-in-read bug
-    echo -en "\r"; tput el	# Clear line for prompt. 
+    echo -en "\r"; tput el	# Clear line for prompt.
     tput rmkx			# Disable terminal application key sequences
     tput cnorm			# Show the cursor.
     [[ -d "$tmpdir" ]] && rm -r "$tmpdir" # Erase temporary files.
@@ -173,21 +173,21 @@ usage() {
     cat <<EOF
 Usage: vv [OPTION]... [FILE | DIR]...
 Rapidly view and delete image files in a Sixel-capable terminal.
-With no arguments, searches current directory for images. 
+With no arguments, searches current directory for images.
 
   -r, --recursive[=yes|ask]	# Search image directories recursively [ask].
   -R, --recursive=no		# Do not search sub directories recursively.
-  -f, --full    		# View images full-size of terminal (${width}x${height}).
+  -f, --full			# View images full-size of terminal (${width}x${height}).
   -F, --fast			# View fast ${previewlines} line high previews [DEFAULT].
   -B, --best-fit		# Like full, but rotate to maximize pixel usage.
-  -S, --slideshow[=DELAY]	# Change images every $ssdelay seconds. 
+  -S, --slideshow[=DELAY]	# Change images every $ssdelay seconds.
   -n, --num-colors=N		# Set max colors. (Currently: $numcolors).
   -g, --geometry=WIDTHxHEIGHT	# Set screen width, height in pixels. (${width}x${height}).
   -P, --preview-size=PIXELS	# Set height of previews (pixels). (${previewsize}).
   -p, --preview-lines=LINES	# Same, but specify in lines of text. ($previewlines).
   -a, --antialias		# Enable smoothing when resizing image [DEFAULT].
   -A, --no-antialias		# Disable smoothing, show pixels as sharp.
-  -?, --help			
+  -?, --help
 EOF
 }
 
@@ -213,13 +213,13 @@ prerequisites() {
 
     # Critical dependencies which cause fatal errors
     if ! command -v convert >/dev/null; then
-	error "Please install ImageMagick for convert and identify" 
+	error "Please install ImageMagick for convert and identify"
 	returncode=1
     fi
 
     # Non-fatal errors that simply degrade performance or capability
     if ! command -v tput >/dev/null; then
-	notice "Please install ncurses-bin for tput and infocmp" 
+	notice "Please install ncurses-bin for tput and infocmp"
 	# 'tput el' is used to clear the line.
 	# 'infocmp' is used to interpret the arrow key sequences.
 	alias tput=true;  alias infocmp=true
@@ -253,7 +253,7 @@ prerequisites() {
 	fmt() { cat ; }	   # Only needed for wrapping long comments
     fi
     if ! command -v pdfinfoo >/dev/null; then
-	pdfinfo() { 
+	pdfinfo() {
 	    notice "Page count is slow. Please install pdfinfo (poppler-utils)."
 	    echo "Pages: $(identify "$1" | grep -c PDF)"
 	}
@@ -267,7 +267,7 @@ prerequisites() {
 
     if ! tmpdir=$(mktemp -d --tmpdir "$(basename $0).$$.XXXXXX"); then
 	echo "Error: Could not create temporary directory! Disk full?" >&2
-     	returncode=1
+	returncode=1
     fi
 
     if [[ returncode -eq 0 ]]; then
@@ -278,7 +278,7 @@ prerequisites() {
     fi
 
 }
-    
+
 autodetect() {
     # Various terminal initialization and configuration routines.
 
@@ -292,7 +292,7 @@ autodetect() {
     stty -icanon
 
     # Hide the cursor so it doesn't dash around when we show the prompt.
-    tput civis	
+    tput civis
 
     # Make sure the terminal supports sixel graphics.
     hassixelordie
@@ -304,9 +304,9 @@ autodetect() {
     [[ numcolors -le 256 ]] || numcolors=256
 
     # Don't dither if we have enough colors. (Dither adds +1s to processing).
-    # BUG: Unfortunately, we have to always dither since max colors is 256. 
+    # BUG: Unfortunately, we have to always dither since max colors is 256.
     [[ numcolors -le 256 ]] && dither="yup" || dither=""
-    
+
     # Detect terminal background color (for alpha channel).
     background=$(getbg)
 
@@ -347,7 +347,7 @@ getbg() {
 }
 
 getfg() {
-    # Send the xterm escape sequence to get the fg color of the terminal. 
+    # Send the xterm escape sequence to get the fg color of the terminal.
     local p=10			# 11 is bg, 10 is fg in escape sequence
 
     # wait for terminal to be ready (up to 5 seconds)
@@ -383,7 +383,7 @@ windowchange() {
     LINES=$(tput lines); COLUMNS=$(tput cols)
     [[ $LINES -gt 0 ]] || LINES=24		# Default 24 rows of text.
     fontheight=height/LINES
-    [[ fontheight -gt 0 ]] || fontheight=20 	# Default 20px high font.
+    [[ fontheight -gt 0 ]] || fontheight=20	# Default 20px high font.
     debug "font height is $fontheight"
 
     # Trim returned height so we have room for two lines of text
@@ -391,7 +391,7 @@ windowchange() {
     debug "usable screen height is $height"
 
     if [[ $forcepsize == 0 ]]; then
-	# Preview size height changes based on font size. 
+	# Preview size height changes based on font size.
 	if [[ $previewsize -ne $((fontheight*previewlines)) ]]; then
 	    [[ $previewsize ]] && SHOULDREDRAW=yup
 	    previewsize=fontheight*previewlines
@@ -417,7 +417,7 @@ hassixelordie() {
 
     # IS TERMINAL SIXEL CAPABLE?		# Send Device Attributes
     if read -a REPLY -s -t 1 -d "c" -p $'\e[c' >&2; then
-       for code in "${REPLY[@]}"; do  
+       for code in "${REPLY[@]}"; do
 	   if [[ $code == "4" ]]; then
 	       hassixel=yup
 	       break
@@ -433,11 +433,11 @@ hassixelordie() {
 	Error: Your terminal does not report having sixel graphics support.
 
 	Please use a sixel capable terminal, such as xterm -ti vt340, or
-	ask your terminal manufacturer to add sixel support. 
+	ask your terminal manufacturer to add sixel support.
 
 	You may test your terminal by viewing a single image, like so:
 
-	        convert  foo.jpg  -geometry 800x480  sixel:- 
+		convert  foo.jpg  -geometry 800x480  sixel:-
 
 	If your terminal actually does support sixel, please file a bug
 	report at http://github.com/hackerb9/vv/issues
@@ -447,7 +447,7 @@ hassixelordie() {
 	    echo
 	    cat -v <<< "(Please mention device attribute codes: ${REPLY}c)"
 	fi
-	
+
 	exit 1
     fi
 }
@@ -491,7 +491,7 @@ getwindowsize() {
     waitforterminal # Wait for terminal to be ready before querying.
 		    # Necessary for Xterm-344 due to slow redraw bug.
 
-    local -i w=0 h=0 		# for reading width and height integers
+    local -i w=0 h=0		# for reading width and height integers
     local d			# dummy variable
     local IFS=";"		# temporarily split on semicolons
     local REPLY=(0 0 0 0)	# array of results from terminal
@@ -499,10 +499,10 @@ getwindowsize() {
     # Send control sequence to query the sixel graphics geometry.
     if read -a REPLY -s -t ${timeout} -d "S" -p $'\e[?2;1;0S' >&2; then
 	if [[ ${#REPLY[@]} -ge 4 && ${REPLY[2]} -gt 0 && ${REPLY[3]} -gt 0 ]]; then
-    	    w=${REPLY[2]}
-    	    h=${REPLY[3]}
+	    w=${REPLY[2]}
+	    h=${REPLY[3]}
 	else
-    	    # Nope. Fall back to dtterm WindowOps to approximate sixel geometry.
+	    # Nope. Fall back to dtterm WindowOps to approximate sixel geometry.
 	    waitforterminal
 	    if read -a REPLY -s -t ${timeout} -d "t" -p $'\e[14t' >&2; then
 		if [[ $? == 0  &&  ${#REPLY[@]} -ge 3  &&  ${REPLY[2]} -gt 0 ]]; then
@@ -544,7 +544,7 @@ inittermkey() {
     if tput smkx; then
 	for k in $(infocmp -L1 | egrep 'key_|cursor_'); do
 	    a=""; x=""
-	    # Example "k: 	key_down=\EOB,"
+	    # Example "k:	key_down=\EOB,"
 	    a=${k#*key_}
 	    a=${a#*cursor_}
 	    a=${a%=*}		# a: down
@@ -563,7 +563,7 @@ configreadline() {
 
     # Editing happens on only one line of text, scrolling horizontally.
     bind "set horizontal-scroll-mode on" 2>/dev/null
-    
+
     # XXX If I knew how to disable readline adding a space after
     # filename completion I would do so here. (See saverenamemove()).
 }
@@ -571,7 +571,7 @@ configreadline() {
 parseescape() {
     # Parse terminal escape sequence for F-keys, arrows.
     # Read all the characters following an escape key has been hit
-    # and then look it up in the termkey array. 
+    # and then look it up in the termkey array.
     while read -t 0; do
 	read -n 1 -s temp
 	REPLY+="$temp"
@@ -656,13 +656,13 @@ saverenamemove() {
     elif [[ "$mode" == "save" ]]; then
 	read -d $'\r' -p "Save a copy of $base in: " -e \
 	     -i $(tildify "${lastuseddir:-$dir}/") newname
-    else 
+    else
 	read -d $'\r' -p "Move to: " -e -i "$(tildify "${lastuseddir:-$dir}/")" newname
     fi
     tput civis			# Hide cursor.
     stty -echo			# Hide input keys.
 
-    newname=${newname/#~\//$HOME/} 	   # untildify (for realpath.)
+    newname=${newname/#~\//$HOME/}	   # untildify (for realpath.)
 
     # Remove trailing space from tab completion.
     if [[  "${newname}" =~ (.*[^ ])([ ]+)$  ]]; then
@@ -675,7 +675,7 @@ saverenamemove() {
     [[ -d "$newname" ]] && newname+="/."   # Use existing directory.
     [[ "$newname" != */ ]] || newname+="." # Never end with a "/" (for dirname.)
     mkdir -p $(dirname "$newname")
-    newname=$(realpath "$newname" 2>/dev/null) # Canonicalize 
+    newname=$(realpath "$newname" 2>/dev/null) # Canonicalize
 
     if [[ "$newname"  &&  "$newname" != "$dir"  &&  ! "$newname" -ef "$path" ]]
     then
@@ -711,9 +711,9 @@ saverenamemove() {
 	# Extra warning to double check dangerous operations.
 	if [[ "$overwrite" ]]; then
 	    # Okay to save/rename/move (possibly overwriting)?
-            e "$mode $file to $overwrite$newname (y/N)? "
+	    e "$mode $file to $overwrite$newname (y/N)? "
 
-            read -s -n1
+	    read -s -n1
 	    case "$REPLY" in
 		y|Y) # Yes, just continue.
 		     ;;
@@ -723,7 +723,7 @@ saverenamemove() {
 		    ;;
 	    esac
 	fi
-	
+
 	if [[ $mode == "save" ]]; then
 	    if cp -p "$path" "$newname"; then
 		E "Saved a copy of $file to $newname"
@@ -747,7 +747,7 @@ saverenamemove() {
 	# Remember the directory for easy saving next time.
 	lastuseddir=$(dirname "$newname")
     fi
-    
+
     return
 }
 
@@ -770,7 +770,7 @@ editproperty() {
     # Example property names: "comment", "caption", "title", "description"
     local propname="$1"
     local file="$2"
-    local frame0="file://$file[0]"  # Without file://, IM barfs on colons. 
+    local frame0="file://$file[0]"  # Without file://, IM barfs on colons.
     local property=$(identify -format "%[$propname]" "$frame0" 2>/dev/null)
     local prompt="New $propname: "
     local multiline=""
@@ -792,7 +792,7 @@ editproperty() {
 	E "$propname editing cancelled."
 	return
     fi
-    
+
     e "Writing comment into $file..."
     local t=$(mktemp "/tmp/$(basename $0).XXXXXX") || return 1
     cp "$file" "$t"  &&  convert "$t" -set "$propname" "$newproperty" "$file"
@@ -804,7 +804,7 @@ showproperty() {
     # Show the property. Return failure if the property doesn't exist.
     local propname="$1"
     local file="$2"
-    local frame0="file://$file[0]" 
+    local frame0="file://$file[0]"
     local property=$(identify -format "%[$propname]" "$frame0" 2>/dev/null) &&
 	echo "$propname: $property"
 }
@@ -847,13 +847,13 @@ yandeximagesearch() {
     # Upload the image and save the output to search through.
     # Note: Curl's "@filename" splits filenames with commas & semicolons.
     output=$(convert -sample "$scale"  "$file"  jpeg:- |
-    		 curl --max-time 30  --cookie "$cookie" \
-    		      --form upfile='@-;filename=foo.jpg'  $url)
-    if [[ $? -gt 0 ]]; then return; fi 
+		 curl --max-time 30  --cookie "$cookie" \
+		      --form upfile='@-;filename=foo.jpg'  $url)
+    if [[ $? -gt 0 ]]; then return; fi
 
     # First, check for Content-Based Image Recognition.
     # Look for "params":{"url":"cbir_id=4725%2FkrTprMr_05694&rpt=imageview"
-    resultPage=$(echo "$output" | grep -o '"cbir_id=[^"]*"' )	 
+    resultPage=$(echo "$output" | grep -o '"cbir_id=[^"]*"' )
     if [[ "$resultPage" ]]; then
 	resultPage=${resultPage#\"}; resultPage=${resultPage%\"}
 	resultPage="/images/search?$resultPage"
@@ -865,8 +865,8 @@ yandeximagesearch() {
 	resultPage=$(
 	    echo "$output" |
 		sed -rn '
-		    	 s/&amp;/\&/g;
-		         s/.*img_url=(http[^"&;]*).*/\1/p;
+			 s/&amp;/\&/g;
+			 s/.*img_url=(http[^"&;]*).*/\1/p;
 			')
 	if [[ "$resultPage" ]]; then
 	    echo "Oh good, img_url worked." >&2
@@ -900,7 +900,7 @@ numframes() {
     # (For most images, this will be 1.)
     local file="$1"
 
-    # ImageMagick can count frames in a gif or apng, but doesn't do well when 
+    # ImageMagick can count frames in a gif or apng, but doesn't do well when
     # faced with a video. Rely on mediainfo/ffprobe instead.
     case $(mimetype "$file") in
 	video/*)		#  («Radio killed?»)
@@ -912,7 +912,7 @@ numframes() {
 	    if [[ $file == *gif || $file == *png  ]]; then
 		# Note, it is much faster to pipe to 'wc' than to use
 		# `convert "$file[-1]" -format "%[scene]" info:-`
-		identify "$file" | wc -l 
+		identify "$file" | wc -l
 	    else
 		echo 1
 	    fi
@@ -924,12 +924,12 @@ numframes() {
 fakemediainfo() {
     notice "Please install 'mediainfo' for counting video frames"
 
-    # If mediainfo isn't installed, fake it using ffprobe. 
+    # If mediainfo isn't installed, fake it using ffprobe.
     # This is slow and could take a quarter of a second to run.
     # (Mediainfo takes only a twentieth of a second.)
     while [[ $1 == -* ]]; do shift; done
 
-    # Although the ffprobe documentation claims to have a -count_frames option, 
+    # Although the ffprobe documentation claims to have a -count_frames option,
     # it doesn't actually work. We must resort to an ugly kludge:
     # print everything and count the word "video".
     ffprobe -show_packets "$1" 2>/dev/null | grep -c video
@@ -962,7 +962,7 @@ isimage() {
 	    return 1
 #	fi
     elif [[ "$file" == *sixel ]]; then
-	# The magic database doesn't know sixel files yet, so go by fileext. 
+	# The magic database doesn't know sixel files yet, so go by fileext.
 	return 0
     elif [[ $type == image/*  ]]; then
 	# Return true for an image.
@@ -984,7 +984,7 @@ isimage() {
 	    return 0
 	fi
     fi
-	
+
     # Not viewable, return false.
     return 1
 }
@@ -1033,13 +1033,13 @@ imageinfo() {
 
 	application/pdf)
 	    declare -A info
-	    while IFS=:  read key val 
+	    while IFS=:  read key val
 	    do
 		trim key val
 		info["$key"]="$val"
 	    done			 <  <(pdfinfo "$file")
 	    local p=${info["Pages"]:-1}
-	    local s=${info["Page size"]:-} 
+	    local s=${info["Page size"]:-}
 	    local t=${info["Title"]:-}
 	    echo -n " $p page$(s $p)${s:+,  }$s${t:+,  }$t"
 	    FrameCount=1     # Fake a FrameCount, else image will not be shown.
@@ -1061,7 +1061,7 @@ imageinfo() {
 		trim value
 		a[$key]="$value"
 	    done
-	    
+
 	    # Cleanup "1 366 pixels" -> "1366".
 	    a["Width"]="${a["Width"]% pixels}"
 	    a["Height"]="${a["Height"]% pixels}"
@@ -1072,7 +1072,7 @@ imageinfo() {
 	    FrameCount=$(mediainfo  --Inform='Video;%FrameCount%'  "$file")
 	    ImageWidth=${a["Width"]}
 	    ImageHeight=${a["Height"]}
-	    
+
 	    # Okay, finally show the video info.
 	    echo -n ${ImageWidth}x${ImageHeight} pixels, " "
 	    echo -n ${FrameCount} frame$(s $FrameCount), " @"
@@ -1082,7 +1082,7 @@ imageinfo() {
 	application/zip|application/rar|application/tar|application/7z)
 	    case "$file" in
 		*.cb?|*.CB?)
-		    echo -e " - ComicBook archives not supported (yet).\n" 
+		    echo -e " - ComicBook archives not supported (yet).\n"
 		    return 1
 		    ;;
 		*)
@@ -1103,7 +1103,7 @@ imageinfo() {
     else
 	echo			# New line for sixel image to start at.
 	return 0
-    fi	  
+    fi
 }
 
 mimetype() {
@@ -1130,11 +1130,11 @@ id() {
     local rp=$(realpath "$f")
     if [[ $rp =~ ^$HOME ]]; then
 	rp=${rp/$HOME/\~}		# Replace /home/username with ~
-    fi   
+    fi
     echo -n "$rp: "
     local format="%wx%h %m, ${size}B"
 #    format+=", %[colors] colors"		# Calculated (too slow?)
-    format+="\n" 
+    format+="\n"
     if [[ "$f" != *svg ]]; then
 	identify -format "$format" "file://$f[0]"
     else
@@ -1223,7 +1223,7 @@ showimage() {
     # crop gets set in "fit width" mode
     local crop=""
 
-    # -flatten is needed for transparent PNGs, 
+    # -flatten is needed for transparent PNGs,
     # but interferes with fitwidth's -crop option.
     local flatten="-flatten"
 
@@ -1232,14 +1232,14 @@ showimage() {
     if [[ $viewmode == "width" ]]; then
        # fit width fits image width to screen, but not height
        geometry="$gt${width}x"
-       # Round crop down to the height of a line of text to avoid gaps 
+       # Round crop down to the height of a line of text to avoid gaps
        crop="-crop x$(( (height/fontheight) * fontheight ))"
        # Disable centering's -extent
        centering=""
        # Disable flattening multiple layers
        flatten=""
     else
-	if [[ $viewmode == "fast" ]]; then 
+	if [[ $viewmode == "fast" ]]; then
 	    geometry="$gt${width}x${previewsize}"
 	else
 	    geometry="$gt${width}x$gt${height}"
@@ -1256,7 +1256,7 @@ showimage() {
     debug "OSC 8 URI link goes to $osc8uri"
 
     case $viewmode in
-	full|width) 		# Large, high quality and slow. (about 1 second)
+	full|width)		# Large, high quality and slow. (about 1 second)
 	    e "preparing $viewmode"
 
 	    # For speed, use ImageMagick's -extract option to load large images.
@@ -1271,8 +1271,8 @@ showimage() {
 		    extract="-extract >${height}x>${width}"
 		fi
 	    fi
-	    
- 	    echo -n "${dorotate:+, rotated}"
+
+	    echo -n "${dorotate:+, rotated}"
 	    echo -n "${enhance:+, enhanced}"
 	    echo -n "${dither:+, dithered}"
 	    echo -n "${aalias:+, antialiased}"
@@ -1290,8 +1290,8 @@ showimage() {
 		    $flatten \
 		    sixel:-)
 	    ;;
-	fast|*)				    		   # Fast and cruddy
-	    e "preparing fastest preview\r" 		   # About 0.15 seconds
+	fast|*)						   # Fast and cruddy
+	    e "preparing fastest preview\r"		   # About 0.15 seconds
 	    if [[ $aalias ]]; then resize=geometry; else resize=sample; fi
 	    # Note that -sample is faster for large images, but super cruddy.
 	    # 3,000,000 pixels empirically found as where time benefit began.
@@ -1313,7 +1313,7 @@ showimage() {
 	    # Note: +repage is needed for images with virtual canvases.
 	    # Note: +dither (disable dither) saves ~200ms sixel creation time.
 	    # Note: -colors 256 saves another ~200ms sixel creation time.
-	    # Note: -crop is used by fitwidth 
+	    # Note: -crop is used by fitwidth
 	    ;;
     esac
     tput el
@@ -1321,10 +1321,10 @@ showimage() {
 	echo -n "$output"
 	SHOULDREDRAW=""		# Reset redraw flag until SIGWINCH trips it
     else
-	# Error. ImageMagick must have failed as $output is empty. 
+	# Error. ImageMagick must have failed as $output is empty.
 	return 1
     fi
-    return 
+    return
 }
 
 mayberotate() {
@@ -1362,7 +1362,7 @@ showprompt() {
 	    echo -n "'v' for video, "
 	elif [[ $currentview != full ]]; then
 	    echo -n "'f' for full, "
-	fi		
+	fi
 	echo -n "'h' for help, 'q' to quit."
 	tput el
     fi
@@ -1371,9 +1371,9 @@ showprompt() {
 
 
 declare -ig recursionlevel=0	# How many times doit() has called itself.
-declare -g  abortrecursion=""	# Used to pop back up to the top level dir. 
+declare -g  abortrecursion=""	# Used to pop back up to the top level dir.
 declare -g  poprecursion=""	# Used by checkrflag to pop up one level.
-declare -g  slideshow=""	# Gets set to "yes" when running slideshow. 
+declare -g  slideshow=""	# Gets set to "yes" when running slideshow.
 doit () {
     # For every file, show it and ask what is to be done.
     # This is the main loop of the program.
@@ -1387,7 +1387,7 @@ doit () {
 		abortrecursion=""
 	    fi
 	fi
-	    
+
 	# Found a directory, so maybe recurse
 	if [[ -d "$f" && ! -L "$f" ]]; then
 	    # Allow Enter key to switch recursion flag to 'ask'.
@@ -1430,12 +1430,12 @@ doit () {
 	# Discard any keystrokes hit before read loop started.
 	flushstdin
 
-	# Read a key loop. 
+	# Read a key loop.
 	while true; do
 
 	    if [[ $SHOULDREDRAW ]]; then
 		# Sigwinch interrupt handler resized screen
-		SHOULDREDRAW=""	
+		SHOULDREDRAW=""
 		echo
 		viewmode=$currentview  showimage "$f"
 		continue 1
@@ -1445,7 +1445,7 @@ doit () {
 
 	    # Use read timeout to check several times a second for window resize.
 	    REPLY=
-	    while [[ -z $REPLY && -z $SHOULDREDRAW ]]; do 
+	    while [[ -z $REPLY && -z $SHOULDREDRAW ]]; do
 		read $BASH4BUG -s -n1 -t 0.25 < /dev/tty
 		local e=$?
 		if [[ $e -gt 0 ]]; then
@@ -1454,7 +1454,7 @@ doit () {
 			if doslideshow "$f"; then
 			    continue 3 # User hit q to quit vv
 			else
-			    continue 2 # User hit ESC to stop slideshow 
+			    continue 2 # User hit ESC to stop slideshow
 			fi
 		    elif [[ $e -gt 128 ]]; then
 			# normal read timeout (just loop to allow for SIGWINCH)
@@ -1468,18 +1468,18 @@ doit () {
 
 	    if [[ $SHOULDREDRAW ]]; then
 		# Sigwinch interrupt handler resized screen
-		SHOULDREDRAW=""	
+		SHOULDREDRAW=""
 		echo
 		viewmode=$currentview  showimage "$f"
 		continue 1
 	    fi
 
 	    # if [[ "$slideshow" ]]; then
-	    # 	if doslideshow "$f"; then
-	    # 	    continue 2
-	    # 	fi
+	    #	if doslideshow "$f"; then
+	    #	    continue 2
+	    #	fi
 	    # fi
-	    
+
 	    # If we get here, then 'read' successfully got a key.
 	    echo -en "\r"
 	    tput el
@@ -1487,7 +1487,7 @@ doit () {
 	    # Parse terminal escape sequence for F-keys, arrows.
 	    if [[ "$REPLY" == $'\e' ]]; then parseescape; fi
 
-	    flushstdin 	# Remove extraneous keys. (E.g., SPC held down).
+	    flushstdin	# Remove extraneous keys. (E.g., SPC held down).
 
 	    case $REPLY in
 		" ") continue 2   # Space: Skip to next image.
@@ -1511,7 +1511,7 @@ doit () {
 		   viewmode=full showimage "$f"
 		   ;;
 		F) # Toggle full/fast view mode.
-	           [[ $viewmode != full ]] && viewmode=full || viewmode=fast
+		   [[ $viewmode != full ]] && viewmode=full || viewmode=fast
 		   E "Switching default viewmode to $viewmode."
 		   if [[ $currentview != $viewmode ]]; then
 		       showimage "$f"
@@ -1543,7 +1543,7 @@ doit () {
 		   ;;
 
 		M) e "Playing video\r"
-		   # Undocumented for now. Should this use xdg-open? 
+		   # Undocumented for now. Should this use xdg-open?
 		   mpv -loop "$f" || animate "$f"
 		   flushstdin
 		   ;;
@@ -1560,7 +1560,7 @@ doit () {
 		   ;;
 		i) id "$f"			# Quick info
 		   ;;
-		I) 				# Verbose info.
+		I)				# Verbose info.
 		    convert "file://$f[0]" \
 			    -print "%[option:*]%[artifact:*]%[*]" \
 			    null:- | grep -v '^filename='
@@ -1580,7 +1580,7 @@ doit () {
 		    saverenamemove save "$f"
 		    ;;
 		S|f5) # Allow F5 for folks used to other viewers.
-		    if [[ "$slideshow" ]]; then 
+		    if [[ "$slideshow" ]]; then
 			E "Slide show stopped"
 			slideshow=""
 			viewmode=${oldvmss:-fast}
@@ -1653,7 +1653,7 @@ doit () {
 		if [[ $currentview == "fast" ]]; then
 		    stty echo		 # Temporarily show characters the user types.
 		    tput cnorm		 # Temporarily show the cursor.
-		    echo -en "\r"; tput el	# Clear line for prompt. 
+		    echo -en "\r"; tput el	# Clear line for prompt.
 		    IFS= read -e -r -p "Height of preview in lines [$previewlines] ? "
 		    tput civis
 		    stty -echo
@@ -1661,7 +1661,7 @@ doit () {
 		    if [[ "$REPLY" -le 0 || "$REPLY" -eq $previewlines ]]; then
 			E "Preview lines unchanged"
 		    else
-			[[ "$REPLY" -lt $LINES ]] || REPLY=$((LINES-2)) 	# Max is #rows - 2
+			[[ "$REPLY" -lt $LINES ]] || REPLY=$((LINES-2))		# Max is #rows - 2
 			previewlines=$REPLY
 			E "Preview lines changed to $previewlines"
 			windowchange
@@ -1695,7 +1695,7 @@ doit () {
 		Z|z) # Magnify small images up to size of screen
 		    togglezoomin "$f"
 		    ;;
-		l|$'\cL') 		# l or ^L to redraw screen.
+		l|$'\cL')		# l or ^L to redraw screen.
 		    clear		# Note: ^L doesn't work with bash4.
 		    showimage "$f"
 		    ;;
@@ -1732,11 +1732,11 @@ doit () {
 		    E "$(basename $0): Advanced options"
 		    showadvancedkeys
 		    ;;
-		q|Q|'\E') exit 
+		q|Q|'\E') exit
 			  ;;
-		,) enabledebugging 
+		,) enabledebugging
 		   ;;
-		*) 
+		*)
 		    echo "Unknown key: $REPLY" |cat -v >&2
 		    ;;
 	    esac;
@@ -1787,7 +1787,7 @@ ADVANCED KEYS
     B: toggle best fit on/off (autorotate portrait image to landscape screen).
     x: exit directory (pops up one level of recursion).
     X: exit all directories (pops up to top level directory).
-    h: help (SHOW MOST COMMON KEYS) 
+    h: help (SHOW MOST COMMON KEYS)
 
 EOF
 }
@@ -1834,7 +1834,7 @@ dotfordot() {
 }
 
 max() {
-    [[ "$1" -gt "$2" ]] && echo "$1" || echo "$2" 
+    [[ "$1" -gt "$2" ]] && echo "$1" || echo "$2"
 }
 
 declare -gi throbidx=0		# Static index for throbber[]
@@ -1851,16 +1851,16 @@ checkrflag() {
     # If $rflag is "ask", then ask the user about entering directory $1.
     # Otherwise, return true.
 
-    # When asking, allow for several special cases. 
+    # When asking, allow for several special cases.
     # In particular, if user hit 'x', they want to abort the current
-    # recursion, so set the global "poprecursion" flag. 
+    # recursion, so set the global "poprecursion" flag.
     case $rflag in
 	"") return 1		# False
 	    ;;
 	ask)
 	    if [[ "$slideshow" ]]; then return 0; fi # Don't ask if showing slideshow.
 
-	    echo -en "\r"; tput el	# Clear line for prompt. 
+	    echo -en "\r"; tput el	# Clear line for prompt.
 	    read -n1 -s -p "Recurse into $1 [Y/n/?] ? "
 	    echo -en "\r"; tput el
 	    flushstdin	       # Remove extraneous keys. (E.g., SPC held down).
@@ -1868,8 +1868,8 @@ checkrflag() {
 		'?'|h)
 		    cat <<-EOF
 		Press
-		    y 	Recurse into “$(basename $1)”.  [DEFAULT]
-		    	(Space and Enter are the same as 'y').
+		    y	Recurse into “$(basename $1)”.  [DEFAULT]
+			(Space and Enter are the same as 'y').
 		    n	Skip directory “$(basename $1)”.
 		    Y	Always answer Yes to recursion.
 		    N	Always answer No to recursion.
@@ -1877,15 +1877,15 @@ checkrflag() {
 		    if [[ $recursionlevel -gt 1 ]]; then
 			cat <<-EOF
 			    x	Exit one level of recursion
-			        (Skip directory “$(basename $(dirname $1))”).
+				(Skip directory “$(basename $(dirname $1))”).
 			    X	Pop up to the top level directory.
 			EOF
 		    fi
-		    checkrflag "$1" 	# Ask them again.
+		    checkrflag "$1"	# Ask them again.
 		    return		# Return same as previous command.
 		    ;;
 		y|""|" ")
-		    return 0 		# ENTER and SPACE mean yes.
+		    return 0		# ENTER and SPACE mean yes.
 		    ;;
 		Y)
 		    echo "Will now always recurse without asking."
@@ -1925,27 +1925,27 @@ checkrflag() {
 sortrecur() {
     # Sort before recursing on a new directory.
     # Input: a list of file and directory names, one per line.
-    # Output: the same list, sorted by 'ls $sortorder'. 
+    # Output: the same list, sorted by 'ls $sortorder'.
     # Directories are placed first, last, or neither based on $traversal.
     # Note: if you have newlines in your filenames, you are silly.
-    
+
     # First, pre-sort files based on time or filename.
     # Default of -v means "natural sort" so 9.png comes before 10.png.
     mapfile -t < <(ls -d $sortorder -- "$@" 2>/dev/null)
     debug "$traversal"
 
 
-    case $traversal in 
-	bfs|[Bb]readth*|[Bb]reath*) 
+    case $traversal in
+	bfs|[Bb]readth*|[Bb]reath*)
 	    # Breadth First Search: show images before opening subdirs.
 	    sortdirslast "${MAPFILE[@]}"
 	    ;;
-	dfs|[Dd]epth*|[Dd]eath*) 
+	dfs|[Dd]epth*|[Dd]eath*)
 	    # "Death First Search" -- Prof. Vazirani.
 	    echo "XXX Depth First Search: does anyone actually want this?" >&2
 	    sortdirsfirst "${MAPFILE[@]}"
 	    ;;
-	neither|*) 
+	neither|*)
 	    # Dirs are not special and are recursed into whenever seen.
 	    showargs "${MAPFILE[@]}"
 	    ;;
@@ -2019,7 +2019,7 @@ togglezoomin() {
 }
 
 doslideshow() {
-    # Wait for the user to hit a key or timeout after $ssdelay seconds. 
+    # Wait for the user to hit a key or timeout after $ssdelay seconds.
     # Returns false only if user wants to stop the slideshow.
 
     local file="$1"
@@ -2047,7 +2047,7 @@ doslideshow() {
 		    if [[ "$REPLY" == $'\e' ]]; then parseescape; fi
 		    case $REPLY in
 			" ") break ;;
-			S|f5|'\E') 		# Stop slideshow.
+			S|f5|'\E')		# Stop slideshow.
 			    slideshow=""
 			    viewmode=${oldvmss:-fast}
 			    return 1
@@ -2104,7 +2104,7 @@ trash() {
     # trash: Move files to ~/.local/share/Trash/files/.
     # Well-nigh-compliant with FreeDesktop Trash Specification.
     # https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
-    # 
+    #
     # Handles same filename deletions, race conditions, URI-style escaping.
     # Bugs: Does not handle $topdir for foreign mounts (e.g., removable drives).
 
@@ -2144,7 +2144,7 @@ atomictouch() {
     # Otherwise, it return an error.
     # This is atomic because Bash uses O_EXCL for noclobber.
     ( set -C; >"$1"; ) 2>&-
-}    
+}
 
 uriescape() {
     # FROM RFC 2396, Uniform Resource Identifiers
@@ -2161,11 +2161,11 @@ uriescape() {
 	    a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|\;|\/|\?|\:|\@|\&|\=|\+|\$|\,|\-|\_|\.|\!|\~|\*|\'|\(|\))
 		echo -n "$c"
 		;;
- 	    *) echo -n "$c" | hexdump -ve '/1 ":%02X"' | tr : %
+	    *) echo -n "$c" | hexdump -ve '/1 ":%02X"' | tr : %
 	       ;;
 	esac
     done
-    echo 
+    echo
 }
 
 unuriescape() {
@@ -2189,7 +2189,7 @@ unuriescape() {
 	esac
 	echo -n "$c"
     done
-    echo 
+    echo
 }
 
 untrash() {
@@ -2212,10 +2212,10 @@ untrash() {
 	    E "Trashcan is empty." >&2
 	    return 1
 	fi
-	    
+
 	# Sanity check
 	[[ -e "$infofile" ]] || return 1    # No info, nothing to untrash.
-	
+
 	local trashname="${infofile%.trashinfo}"
 	trashname="${trashname#$trashdir/info/}"
 	trashname="$trashdir/files/$trashname"
@@ -2244,7 +2244,7 @@ untrash() {
 	    Path="$HOME/$(basename "$Path")"
 	fi
     fi
-       
+
     # Finally, we can restore the file.
     if mv --backup=numbered "$trashname" "$Path" && rm "$infofile"; then
 	echo "$Path"		# Return filename untrashed
@@ -2264,7 +2264,7 @@ untrash() {
 set -o nounset			# Just for laughs, let's die on typos. ;-)
 
 # Check prerequisites
-prerequisites 
+prerequisites
 
 # Determine window size, set up terminal
 autodetect
@@ -2427,7 +2427,7 @@ done
 
 
 if [[ $# -gt 0 ]]; then
-    # Show all files/dirs mentioned on command line. 
+    # Show all files/dirs mentioned on command line.
     recursionlevel=0		# Allow one level of recursion for any
     doit "$@"			# directories named on command line.
 else
@@ -2439,4 +2439,3 @@ fi
 
 # Don't quit until images have finished transferring.
 waitforterminal
-
