@@ -138,7 +138,7 @@ declare -gi  previewsize=0	# Height of preview in pixels. (C.f., previewlines, a
 declare -gi  forcepsize=0	# Size of preview, if given on commandline.
 declare -g   tmpdir		# Directory for storing temporary files.
 declare -gA  termkey		# Array to hold terminfo key input sequences.
-declare -g   currentview=$viewwmode	# Most recently used viewmode.
+declare -g   currentview=$viewmode	# Most recently used viewmode.
 declare -gi  FrameCount		# Number of image frames in file. >1 for videos.
 declare -gi  ImageWidth		# Image width in pixels.
 declare -gi  ImageHeight	# Image height in pixels.
@@ -492,7 +492,6 @@ getwindowsize() {
 		    # Necessary for Xterm-344 due to slow redraw bug.
 
     local -i w=0 h=0		# for reading width and height integers
-    local d			# dummy variable
     local IFS=";"		# temporarily split on semicolons
     local REPLY=(0 0 0 0)	# array of results from terminal
 
@@ -770,13 +769,11 @@ editproperty() {
     # Example property names: "comment", "caption", "title", "description"
     local propname="$1"
     local file="$2"
-    local frame0="file://$file[0]"  # Without file://, IM barfs on colons.
+    local frame0="file://${file[0]}"  # Without file://, IM barfs on colons.
     local property=$(identify -format "%[$propname]" "$frame0" 2>/dev/null)
     local prompt="New $propname: "
-    local multiline=""
 
     if [[ $(echo "$property" | wc -l) -gt 1 ]]; then
-	multiline="yup"
 	prompt=""
 	echo "WARNING: Existing $propname has multiple lines."
 	echo "         Use ^V^J to add new lines."
@@ -804,7 +801,7 @@ showproperty() {
     # Show the property. Return failure if the property doesn't exist.
     local propname="$1"
     local file="$2"
-    local frame0="file://$file[0]"
+    local frame0="file://${file[0]}"
     local property=$(identify -format "%[$propname]" "$frame0" 2>/dev/null) &&
 	echo "$propname: $property"
 }
@@ -907,11 +904,11 @@ numframes() {
 	    # MediaInfo is faster than convert, but doesn't handle GIF, APNG.
 	    mediainfo  --Inform='Video;%FrameCount%'  "$file"
 	    ;;
-	*|image/*)		# An image file. (default)
+	image/*|*)		# An image file. (default)
 	    shopt -s nocasematch
 	    if [[ $file == *gif || $file == *png  ]]; then
 		# Note, it is much faster to pipe to 'wc' than to use
-		# `convert "$file[-1]" -format "%[scene]" info:-`
+		# `convert "${file[-1]}" -format "%[scene]" info:-`
 		identify "$file" | wc -l
 	    else
 		echo 1
@@ -956,7 +953,7 @@ isimage() {
 
     if [[ $type == image/svg*  ]]; then
 	# SVG files are special: ImageMagick might call inkscape which is slow.
-#	if identify "msvg:$file[0]" >/dev/null 2>&1; then
+#	if identify "msvg:${file[0]}" >/dev/null 2>&1; then
 #	    return 0
 #	else
 	    return 1
@@ -966,7 +963,7 @@ isimage() {
 	return 0
     elif [[ $type == image/*  ]]; then
 	# Return true for an image.
-	if identify "file://$file[0]" >/dev/null 2>&1 \
+	if identify "file://${file[0]}" >/dev/null 2>&1 \
 	       || identify "$file" >/dev/null 2>&1; then
 	    return 0
 	fi
@@ -1016,7 +1013,7 @@ imageinfo() {
     case $type in
 	image/*|application/dicom)
 	    # NB: Running sed repeatedly is faster than "identify -format".
-	    local id=$(identify "$file[0]" 2>/dev/null)
+	    local id=$(identify "${file[0]}" 2>/dev/null)
 	    # sample.miff MIFF 100x100 3072x2304+1486+1102 8-bit Palette sRGB 33c 33507B 0.000u 0:00.000
 	    local wxh=$(sed -rn 's/.* ([0-9]+x[0-9]+) .*/\1/p' <<<$id)
 	    local bitdepth=$(sed -rn 's/.* ([0-9]+-bit) .*/\1/p' <<<$id)
