@@ -769,7 +769,7 @@ editproperty() {
     # Example property names: "comment", "caption", "title", "description"
     local propname="$1"
     local file="$2"
-    local frame0="file://${file[0]}"  # Without file://, IM barfs on colons.
+    local frame0="file://$file[0]"  # Without file://, IM barfs on colons.
     local property=$(identify -format "%[$propname]" "$frame0" 2>/dev/null)
     local prompt="New $propname: "
 
@@ -801,7 +801,7 @@ showproperty() {
     # Show the property. Return failure if the property doesn't exist.
     local propname="$1"
     local file="$2"
-    local frame0="file://${file[0]}"
+    local frame0="file://$file[0]"
     local property=$(identify -format "%[$propname]" "$frame0" 2>/dev/null) &&
 	echo "$propname: $property"
 }
@@ -953,7 +953,7 @@ isimage() {
 
     if [[ $type == image/svg*  ]]; then
 	# SVG files are special: ImageMagick might call inkscape which is slow.
-#	if identify "msvg:${file[0]}" >/dev/null 2>&1; then
+#	if identify "msvg:$file[0]" >/dev/null 2>&1; then
 #	    return 0
 #	else
 	    return 1
@@ -963,7 +963,7 @@ isimage() {
 	return 0
     elif [[ $type == image/*  ]]; then
 	# Return true for an image.
-	if identify "file://${file[0]}" >/dev/null 2>&1 \
+	if identify "file://$file[0]" >/dev/null 2>&1 \
 	       || identify "$file" >/dev/null 2>&1; then
 	    return 0
 	fi
@@ -1013,7 +1013,7 @@ imageinfo() {
     case $type in
 	image/*|application/dicom)
 	    # NB: Running sed repeatedly is faster than "identify -format".
-	    local id=$(identify "${file[0]}" 2>/dev/null)
+	    local id=$(identify "$file[0]" 2>/dev/null)
 	    # sample.miff MIFF 100x100 3072x2304+1486+1102 8-bit Palette sRGB 33c 33507B 0.000u 0:00.000
 	    local wxh=$(sed -rn 's/.* ([0-9]+x[0-9]+) .*/\1/p' <<<$id)
 	    local bitdepth=$(sed -rn 's/.* ([0-9]+-bit) .*/\1/p' <<<$id)
