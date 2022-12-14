@@ -1226,13 +1226,14 @@ showimage() {
     # geometry for ImageMagick's -geometry flag.
     local geometry="$gt${width}x$gt${height}"
 
+    local extract="-extract >${width}x>${height}" # Speed up large images
+
     # Configure options based on viewmode
     case $viewmode in
 	fast)
 	    geometry="$gt${width}x${previewsize}"
 	    ;;
 	full)
-	    extract="-extract >${width}x>${height}" # Speed up large images
 	    ;;
 	bestfit)
 	    dorotate=$(mayberotate "$1")
