@@ -2,7 +2,7 @@
 
 # vv: VT View
 
-# Version 1.9
+# Version 1.9.2
 # B9 May 2022
 
 # Use sixel graphics to show images inside a terminal (e.g., xterm).
@@ -1249,7 +1249,7 @@ showimage() {
 	    centering=""
 	    # Disable flattening multiple layers
 	    flatten=""
-	    # Don't -extract to the height, since we'll be showing multiple crops.
+	    # Don't shrink to screen height, as we'll be showing multiple crops.
 	    extract=${extract%x*}
 	    ;;
 	*)
