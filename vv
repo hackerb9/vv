@@ -120,7 +120,6 @@ declare -g  shownotices="y"	# Show optional messages.("Install X to get Y").
 
 # Defaults for image processing flags. Note that opposite of "y" is "", not "n".
 # To disable, set to empty string. To enable, set to any string.
-declare -g  bestfit=""   # Rotate images automatically to fit better on screen.
 declare -g   dither="y"  # Improve image quality by dithering if viewmode==full.
 declare -g   aalias="y"  # Smooths jaggies when zooming in on small images.
 declare -g  enhance=""	 # Lightens dark images with gamma +1.5. Set by (e)
@@ -1206,7 +1205,7 @@ showimage() {
 	echo "Warning: ImageMagick may show blackness when scaling sixel images." >&2
     fi
 
-    # dorotate gets set if "bestfit" is on and rotating the image
+    # dorotate gets set if viewmode is best fit and rotating the image
     # would allow us to see more of it on the screen.
     local dorotate=""
 
@@ -1224,36 +1223,39 @@ showimage() {
     # but would interfere with fitwidth's -crop option.
     local flatten="-flatten"
 
-    # For speed, use ImageMagick's -extract option to load large images.
-    extract="-extract >${width}x>${height}"
-
-    if [[ "$bestfit" ]]; then
-	dorotate=$(mayberotate "$1")
-	if [[ "$dorotate" ]]; then
-	    extract="-extract >${height}x>${width}"
-	fi
-    fi
-
     # geometry for ImageMagick's -geometry flag.
-    local geometry
-    if [[ $viewmode == "width" ]]; then
-       # fit width fits image width to screen, but not height
-       geometry="$gt${width}x"
-       # Round crop down to the height of a line of text to avoid gaps
-       crop="-crop x$(( (height/fontheight) * fontheight ))"
-       # Disable centering's -extent
-       centering=""
-       # Disable flattening multiple layers
-       flatten=""
-       # Don't -extract to the height, since we'll be showing multiple crops.
-       extract=${extract%x*}
-    else
-	if [[ $viewmode == "fast" ]]; then
+    local geometry="$gt${width}x$gt${height}"
+
+    # Configure options based on viewmode
+    case $viewmode in
+	fast)
 	    geometry="$gt${width}x${previewsize}"
-	else
-	    geometry="$gt${width}x$gt${height}"
-	fi
-    fi
+	    ;;
+	full)
+	    extract="-extract >${width}x>${height}" # Speed up large images
+	    ;;
+	bestfit)
+	    dorotate=$(mayberotate "$1")
+	    if [[ "$dorotate" ]]; then
+		extract="-extract >${height}x>${width}"
+	    fi
+	    ;;
+	width)
+	    # fit width fits image width to screen, but not height
+	    geometry="$gt${width}x"
+	    # Round crop down to the height of a line of text to avoid gaps
+	    crop="-crop x$(( (height/fontheight) * fontheight ))"
+	    # Disable centering's -extent
+	    centering=""
+	    # Disable flattening multiple layers
+	    flatten=""
+	    # Don't -extract to the height, since we'll be showing multiple crops.
+	    extract=${extract%x*}
+	    ;;
+	*)
+	    error "Unknown viewmode '$viewmode'"
+	    exit 1
+    esac
 
     currentview=$viewmode	# Remember last used viewmode.
 
@@ -1264,12 +1266,12 @@ showimage() {
     local osc8uri="file://`hostname --fqdn``realpath "$1"`"
     debug "OSC 8 URI link goes to $osc8uri"
 
+    # All set let's show it. 
     case $viewmode in
-	full|width)		# Large, high quality and slow. (about 1 second)
+	full|width|bestfit)	# Large, high quality and slow. (about 1 second)
 	    e "preparing $viewmode"
 	    # If antialiasing is off, use -sample to resize the image.
 	    if [[ $aalias ]]; then resize=geometry; else resize=sample; fi
-
 
 	    echo -n "${dorotate:+, rotated}"
 	    echo -n "${enhance:+, enhanced}"
@@ -1601,23 +1603,14 @@ doit () {
 		    viewmode=$currentview showimage "$f"
 		    ;;
 		B) # Toggle autorotate image to fit screen (portrait/landscape).
-		    if [[ "$bestfit" ]]; then
-			E "Turning best fit off (do not autorotate to fit screen)"
-			bestfit=""
-			viewmode=fast
-		    else
-			if [[ $width -gt $height ]]; then
-			    E "Turning best fit on (autorotate large portrait images to fit landscape screen)"
-			else
-			    E "Turning best fit on (autorotate large landscape images to fit portrait screen)"
-			fi
-			bestfit=yup
-			viewmode=full
+		    [[ $viewmode != bestfit ]] && viewmode=bestfit || viewmode=fast
+		    E "Switching default viewmode to $viewmode."
+		    if [[ $currentview != $viewmode ]]; then
+			showimage "$f"
 		    fi
-		    showimage "$f"
 		    ;;
-		$'\cb') # Rotate this one image to fit the screen.
-		    bestfit=yup viewmode=full showimage "$f"
+		$'\cb') # Ctrl-B: Rotate this one image to fit the screen.
+		    viewmode=bestfit showimage "$f"
 		    ;;
 		D) # Toggle dither
 		    if [[ "$dither" ]]; then
@@ -2341,8 +2334,7 @@ while true; do
 	    ;;
 	-B|--best-fit)
 	    echo "Best-fit (full screen, auto-rotate to maximize screen usage)"
-	    bestfit="yup"
-	    viewmode="full"
+	    viewmode="bestfit"
 	    shift
 	    continue
 	    ;;
