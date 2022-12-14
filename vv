@@ -587,14 +587,14 @@ flushstdin() {
 }
 
 e() {
-    # Clear current line and print text on it without a formfeed
+    # Clear current line and print text on it without a linefeed
     echo -en "\r"
     tput el
     echo -en "$(tildify "$*")"  # Not using $@ so I can pass args to echo.
 }
 
 E() {
-    # Clear current line and print text on it with a formfeed
+    # Clear current line and print text on it with a linefeed
     e "$@"
     echo
 }
@@ -1217,12 +1217,22 @@ showimage() {
     # Centering an image can slow down convert by <200ms. XXX Worth it?
     local centering="-gravity center -extent ${width}x${height}"
 
-    # crop gets set in "fit width" mode
+    # crop gets set in "fit width" mode, below.
     local crop=""
 
     # -flatten is needed for transparent PNGs,
-    # but interferes with fitwidth's -crop option.
+    # but would interfere with fitwidth's -crop option.
     local flatten="-flatten"
+
+    # For speed, use ImageMagick's -extract option to load large images.
+    extract="-extract >${width}x>${height}"
+
+    if [[ "$bestfit" ]]; then
+	dorotate=$(mayberotate "$1")
+	if [[ "$dorotate" ]]; then
+	    extract="-extract >${height}x>${width}"
+	fi
+    fi
 
     # geometry for ImageMagick's -geometry flag.
     local geometry
@@ -1235,6 +1245,8 @@ showimage() {
        centering=""
        # Disable flattening multiple layers
        flatten=""
+       # Don't -extract to the height, since we'll be showing multiple crops.
+       extract=${extract%x*}
     else
 	if [[ $viewmode == "fast" ]]; then
 	    geometry="$gt${width}x${previewsize}"
@@ -1245,7 +1257,7 @@ showimage() {
 
     currentview=$viewmode	# Remember last used viewmode.
 
-    # Save the sixel output to a variable so we can clear "Processing..." message.
+    # Save the sixel output so we can clear "Processing..." message.
     local output=""
 
     # OSC 8 URI linking so user can click on image to open it
@@ -1255,40 +1267,31 @@ showimage() {
     case $viewmode in
 	full|width)		# Large, high quality and slow. (about 1 second)
 	    e "preparing $viewmode"
-
-	    # For speed, use ImageMagick's -extract option to load large images.
-	    extract="-extract >${width}x>${height}"
-
 	    # If antialiasing is off, use -sample to resize the image.
 	    if [[ $aalias ]]; then resize=geometry; else resize=sample; fi
 
-	    if [[ "$bestfit" ]]; then
-		dorotate=$(mayberotate "$1")
-		if [[ "$dorotate" ]]; then
-		    extract="-extract >${height}x>${width}"
-		fi
-	    fi
 
 	    echo -n "${dorotate:+, rotated}"
 	    echo -n "${enhance:+, enhanced}"
 	    echo -n "${dither:+, dithered}"
 	    echo -n "${aalias:+, antialiased}"
 	    echo -en " view...\r"
-	    output=$(${TIME} \
+	    output=$( ${DEBUG:+debugdo} ${TIME} \
 		convert -background $background -auto-orient ${dorotate} \
-		    $extract \
-		    -$resize "$geometry"  \
-		    $crop \
-		    ${enhance:+-channel rgb -auto-level -gamma 1.5} \
-		    +dither ${dither:+-dither floyd-steinberg} \
-		    $centering \
-		    -colors $numcolors \
-		    "file://$1[0]" \
-		    $flatten \
-		    sixel:-)
+			$extract \
+			-$resize "$geometry"  \
+			$crop \
+			${enhance:+-channel rgb -auto-level -gamma 1.5} \
+			+dither ${dither:+-dither floyd-steinberg} \
+			$centering \
+			-colors $numcolors \
+			"file://$1[0]" \
+			$flatten \
+			sixel:-)
+	    # Note: -crop is used by fitwidth and interferes with -flatten.
 	    ;;
-	fast|*)						   # Fast and cruddy
-	    e "preparing fastest preview\r"		   # About 0.15 seconds
+	*|fast)						   # Fast and cruddy
+	    echo -en "preparing fastest preview\r"	   # About 0.15 seconds
 	    if [[ $aalias ]]; then resize=geometry; else resize=sample; fi
 	    # Note that -sample is faster for large images, but super cruddy.
 	    # 3,000,000 pixels empirically found as where time benefit began.
@@ -1296,13 +1299,12 @@ showimage() {
 
 	    output=$(
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
-		${TIME} \
+		${DEBUG:+debugdo} ${TIME} \
 		convert "file://$1[0]" \
 			-auto-orient \
 			-$resize "$geometry" \
 			+repage -background $background \
 			-flatten +dither -colors $numcolors \
-			$crop \
 			sixel:-
 		echo -en "\e]8;;\e\\" # End OSC 8 URI linking
 		  )
@@ -1310,7 +1312,6 @@ showimage() {
 	    # Note: +repage is needed for images with virtual canvases.
 	    # Note: +dither (disable dither) saves ~200ms sixel creation time.
 	    # Note: -colors 256 saves another ~200ms sixel creation time.
-	    # Note: -crop is used by fitwidth
 	    ;;
     esac
     tput el
@@ -2068,6 +2069,15 @@ enabledebugging() {
     TIME=time
     set -o functrace
     trap '{ for ((i=${#FUNCNAME[@]}-1; i>=0; i--)); do echo -en "${BASH_LINENO[i]}: ${FUNCNAME[i]} " >&2 ; [[ $i != 0 ]] && echo -n " -->  " ; done; echo ; } >&2' RETURN
+}
+
+debugdo() {
+    # Both show the command and execute it
+    echo >&2
+    echo >&2
+    echo "$@" >&2
+    echo >&2
+    "$@"
 }
 
 # ----------------------------------------------------------------------
