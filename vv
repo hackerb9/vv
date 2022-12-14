@@ -6,7 +6,7 @@
 # B9 May 2022
 
 # Use sixel graphics to show images inside a terminal (e.g., xterm).
-# Copyright (c) 2019..2021 hackerb9, under the terms of GNU GPL 3+.
+# Copyright (c) 2019..2022 hackerb9, under the terms of GNU GPL 3+.
 
 # Some nice features:
 # * Can display any image type. (Via ImageMagick).
@@ -904,11 +904,11 @@ numframes() {
 	    # MediaInfo is faster than convert, but doesn't handle GIF, APNG.
 	    mediainfo  --Inform='Video;%FrameCount%'  "$file"
 	    ;;
-	image/*|*)		# An image file. (default)
+	*|image/*)		# An image file. (default)
 	    shopt -s nocasematch
 	    if [[ $file == *gif || $file == *png  ]]; then
 		# Note, it is much faster to pipe to 'wc' than to use
-		# `convert "${file[-1]}" -format "%[scene]" info:-`
+		# `convert "$file[-1]" -format "%[scene]" info:-`
 		identify "$file" | wc -l
 	    else
 		echo 1
