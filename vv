@@ -2193,6 +2193,24 @@ unuriescape() {
     echo
 }
 
+uriescapeshell() {
+    # Given a string that has already been URI escaped, also
+    # percent-escape the characters that would confuse eval. 
+    # Any data after a newline are ignored. 
+
+    # These characters will already be URI encoded: "#%< >[\]^`{|}
+    # So all we need to encode are: $&'()
+
+    sed -n '1 {
+		       s#\$#%24#g;
+		       s#&#%26#g;
+		       s#'\''#%27#g;
+		       s#(#%28#g;
+		       s#)#%29#g;
+		       p
+	      }'
+}
+
 untrash() {
     # untrash: Take the most recent file out of ~/.local/share/Trash/files.
     #
@@ -2229,8 +2247,14 @@ untrash() {
     done
 
 
+    local infoline=$(grep 'Path=' "$infofile" | uriescapeshell)
+    if [[ -z "$infoline" ]]; then
+	E "$infofile does not contain a valid Path" >&2
+	return 1
+    fi	
+
     local Path
-    eval $(grep 'Path=' "$infofile" | sed -n '1 { s#(#\\(#g; s#)#\\)#g; p}')
+    eval "$infoline"
     Path=$(unuriescape "$Path")
 
     # Does directory even existing for us to write to?
