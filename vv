@@ -2,11 +2,11 @@
 
 # vv: VT View
 
-# Version 1.9.2
-# B9 May 2022
+# Version 1.9.3
+# B9 May 2023
 
 # Use sixel graphics to show images inside a terminal (e.g., xterm).
-# Copyright (c) 2019..2022 hackerb9, under the terms of GNU GPL 3+.
+# Copyright (c) 2019..2023 hackerb9, under the terms of GNU GPL 3+.
 
 # Some nice features:
 # * Can display any image type. (Via ImageMagick).
