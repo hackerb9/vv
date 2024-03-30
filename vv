@@ -1184,10 +1184,10 @@ fakefile() {
 showimage() {
     # Shows the file named in $1 using sixel.
 
-    # Global variable $viewmode is either "full", which enlarges it to
-    # the full size of the terminal window, or it is "fast", which
-    # scales the image down, removes colors, and takes other shortcuts
-    # for the fastest preview.
+    # Global variable $viewmode is (usually) either "full", which
+    # enlarges it to the full size of the terminal window, or it is
+    # "fast", which scales the image down, removes colors, and takes
+    # other shortcuts for the fastest preview.
 
     # Note that "full size" is not exactly the same as "full screen".
     # In a terminal emulator, the sixel graphics are just a window.
@@ -1319,7 +1319,8 @@ showimage() {
     esac
     tput el
     if [[ "$output" ]]; then
-	echo -n "$output"
+	local ST=$'\e\\\\'			     # String Terminator is Esc \.
+	echo -n "$output" | sed "s/-${ST}/${ST}\n/g"	# (sed kludge for bug in IM 6.9.12)
 	SHOULDREDRAW=""		# Reset redraw flag until SIGWINCH trips it
     else
 	# Error. ImageMagick must have failed as $output is empty.
@@ -1814,12 +1815,14 @@ dotfordot() {
 
 
     ### Show pieces
+    local ST=$'\e\\\\'			     # String Terminator is Esc \.
     local IFS=$'\n'
     for f in $(ls -1v $tmpdir/*crop.ppm); do
 	echo -en "$f\r"
 	convert "$f" "$f.sixel"
-	cat "$f.sixel"
-    done
+	cat "$f.sixel" | sed "s/-${ST}/${ST}\n/g"	# (sed kludge for bug in IM 6.9.12)
+    done 
+
 
     ### All done
     rm $tmpdir/*crop.*
