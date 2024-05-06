@@ -540,7 +540,7 @@ inittermkey() {
 
     # To be valid, we must enable terminal application mode key sequences.
     if tput smkx; then
-	for k in $(infocmp -L1 | egrep 'key_|cursor_'); do
+	for k in $(infocmp -L1 | grep -e 'key_|cursor_'); do
 	    a=""; x=""
 	    # Example "k:	key_down=\EOB,"
 	    a=${k#*key_}
