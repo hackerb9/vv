@@ -146,6 +146,7 @@ declare -gi  ImageHeight	# Image height in pixels.
 declare -g   DEBUG=${DEBUG}	# Set to anything to enable debugging
 declare -g   TIME=		# Set to anything to benchmark sixel creation
 
+declare -g   convert
 
 debug() {
     if [[ "${DEBUG:-}" ]]; then
@@ -211,7 +212,11 @@ prerequisites() {
     local -i returncode=0
 
     # Critical dependencies which cause fatal errors
-    if ! command -v convert >/dev/null; then
+    if command -v magick >/dev/null; then
+	convert=magick
+    elif command -v convert >/dev/null; then
+	convert=convert
+    else
 	error "Please install ImageMagick for convert and identify"
 	returncode=1
     fi
@@ -436,7 +441,7 @@ hassixelordie() {
 
 	You may test your terminal by viewing a single image, like so:
 
-		convert  foo.jpg  -geometry 800x480  sixel:-
+		${convert}  foo.jpg  -geometry 800x480  sixel:-
 
 	If your terminal actually does support sixel, please file a bug
 	report at http://github.com/hackerb9/vv/issues
@@ -791,7 +796,7 @@ editproperty() {
 
     e "Writing comment into $file..."
     local t=$(mktemp "/tmp/$(basename $0).XXXXXX") || return 1
-    cp "$file" "$t"  &&  convert "$t" -set "$propname" "$newproperty" "$file"
+    cp "$file" "$t"  &&  ${convert} "$t" -set "$propname" "$newproperty" "$file"
     rm "$t"
 }
 
@@ -831,7 +836,7 @@ yandeximagesearch() {
 	# It's a video, so search only for first frame.
 	echo "searching only first frame of video" >&2
 	file="$tmpdir/frame0.jpg"
-	convert  "file://$1[0]"  "$file"
+	${convert}  "file://$1[0]"  "$file"
 	deleteme="$file"
     fi
 
@@ -842,7 +847,7 @@ yandeximagesearch() {
 
     # Upload the image and save the output to search through.
     # Note: Curl's "@filename" splits filenames with commas & semicolons.
-    output=$(convert -sample "$scale"  "$file"  jpeg:- |
+    output=$(${convert} "$file" -sample "$scale"  jpeg:- |
 		 curl --max-time 30  --cookie "$cookie" \
 		      --form upfile='@-;filename=foo.jpg'  $url)
     if [[ $? -gt 0 ]]; then return; fi
@@ -1280,7 +1285,7 @@ showimage() {
 	    echo -n "${aalias:+, antialiased}"
 	    echo -en " view...\r"
 	    output=$( ${DEBUG:+debugdo} ${TIME} \
-		convert -background $background -auto-orient ${dorotate} \
+		${convert} "file://$1[0]" -background $background -auto-orient ${dorotate} \
 			$extract \
 			-$resize "$geometry"  \
 			$crop \
@@ -1288,7 +1293,6 @@ showimage() {
 			+dither ${dither:+-dither floyd-steinberg} \
 			$centering \
 			-colors $numcolors \
-			"file://$1[0]" \
 			$flatten \
 			sixel:-)
 	    # Note: -crop is used by fitwidth and interferes with -flatten.
@@ -1303,7 +1307,7 @@ showimage() {
 	    output=$(
 		echo -en "\e]8;;${osc8uri}\e\\" # Begin OSC 8 URI linking
 		${DEBUG:+debugdo} ${TIME} \
-		convert "file://$1[0]" \
+		${convert} "file://$1[0]" \
 			-auto-orient \
 			-$resize "$geometry" \
 			+repage -background $background \
@@ -1563,7 +1567,7 @@ doit () {
 		i) id "$f"			# Quick info
 		   ;;
 		I)				# Verbose info.
-		    convert "file://$f[0]" \
+		    ${convert} "file://$f[0]" \
 			    -print "%[option:*]%[artifact:*]%[*]" \
 			    null:- | grep -v '^filename='
 		    echo $(realpath "$f")
@@ -1810,8 +1814,8 @@ dotfordot() {
     # pieces line up with the terminal text so there are no gaps.
     # Needs to be a multiple of the terminal's font height and width in pixels.
 
-    convert "$f" -crop ${wzoom}x${hzoom}@  -set filename:offset "%X %Y %w %h" \
-	    +adjoin "$tmpdir/%[filename:offset] crop.ppm"
+    ${convert} "$f" -crop ${wzoom}x${hzoom}@  -set filename:offset "%X %Y %w %h" \
+	+adjoin "$tmpdir/%[filename:offset] crop.ppm"
 
 
     ### Show pieces
@@ -1819,7 +1823,7 @@ dotfordot() {
     local IFS=$'\n'
     for f in $(ls -1v $tmpdir/*crop.ppm); do
 	echo -en "$f\r"
-	convert "$f" "$f.sixel"
+	${convert} "$f" "$f.sixel"
 	cat "$f.sixel" | sed "s/-${ST}/${ST}\n/g"	# (sed kludge for bug in IM 6.9.12)
     done 
 
