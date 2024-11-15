@@ -2,11 +2,11 @@
 
 # vv: VT View
 
-# Version 1.9.3
-# B9 May 2023
+# Version 1.9.4
+# B9 November 2024
 
 # Use sixel graphics to show images inside a terminal (e.g., xterm).
-# Copyright (c) 2019..2023 hackerb9, under the terms of GNU GPL 3+.
+# Copyright (c) 2019..2024 hackerb9, under the terms of GNU GPL 3+.
 
 # Some nice features:
 # * Can display any image type. (Via ImageMagick).
@@ -255,6 +255,16 @@ prerequisites() {
 	pdfinfo() {
 	    notice "Page count is slow. Please install pdfinfo (poppler-utils)."
 	    echo "Pages: $(identify "$1" | grep -c PDF)"
+	}
+    fi
+    if command -v chrome >/dev/null; then
+	dumpdom() { chrome --headless --dump-dom "$@"; }
+    elif command -v chromium >/dev/null; then
+	dumpdom() { chromium --headless --dump-dom "$@"; }
+    else
+	dumpdom() {
+	    notice "If yandex mistakes w3m for a bot, please install chrome to run headless javascript."
+	    curl "$@"
 	}
     fi
     if [[ $BASH_VERSINFO -lt 5 ]]; then
@@ -821,7 +831,8 @@ reverseimagesearch() {
 yandeximagesearch() {
     # Reverse image search using yandex and w3m
     # Yandex is not the best but has a simple interface we can access
-    # without javascript. (Unlike Tineye, Bing, and Google.)
+    # (Unlike Tineye, Bing, and Google). Yandex does require
+    # javascript, so we use 'chrome --dump-dom' to retrieve the html.
     local file="$1"
     local output resultPage deleteme="" # Local vars
     local scale=">1000x>1000"	# Image size to scale to before searching.
@@ -838,7 +849,7 @@ yandeximagesearch() {
     url="https://yandex.com/images/search?rpt=imageview"
     url+="&format=json"
     url+='&request=%7B%22blocks%22%3A%5B%7B%22block%22%3A%22cbir-controller__upload%3Aajax%22%7D%5D%7D'
-    cookie="yp=999999999999.sp.aflt%3A999999999999.szm.1; my=YywBAAA="
+    cookie=""
 
     # Upload the image and save the output to search through.
     # Note: Curl's "@filename" splits filenames with commas & semicolons.
@@ -872,8 +883,11 @@ yandeximagesearch() {
 
 
     if [[ "$resultPage" ]]; then
-	echo "Found $(unuriescape "$resultPage")" >&2
-	w3m https://yandex.com$resultPage
+	echo "Found yandex.com/$(unuriescape "$resultPage")" >&2
+	dumpdom https://yandex.com$resultPage |
+	    sed 's|<head>|<base href="https://yandex.com/images"><head>|' > "$tmpdir/yandex.html"
+	w3m "$tmpdir/yandex.html"
+	rm "$tmpdir/yandex.html" 2>/dev/null
     else
 	echo "Error parsing results from Yandex." >&2
     fi
@@ -1448,10 +1462,11 @@ doit () {
 	    # Use read timeout to check several times a second for window resize.
 	    REPLY=
 	    while [[ -z $REPLY && -z $SHOULDREDRAW ]]; do
-		read $BASH4BUG -s -n1 -t 0.25 < /dev/tty
-		local e=$?
-		if [[ $e -gt 0 ]]; then
+		if read $BASH4BUG -s -n1 -t 0.25 < /dev/tty; then
+		    break
+		else
 		    # Read command returned an error (usually timeout).
+		    local e=$?
 		    if [[ "$slideshow" ]]; then
 			if doslideshow "$f"; then
 			    continue 3 # User hit q to quit vv
