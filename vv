@@ -768,7 +768,6 @@ sidebyside() {
 	    -auto-orient \
 	    -geometry ">${half}x>$((height-fontheight))" \
 	    -label "$1" "$1" -label "$2" "$2" sixel:-
-    viewmode=ss
     SHOULDREDRAW=yup
 }
 
