@@ -653,17 +653,17 @@ saverenamemove() {
 	local path=$(realpath "$file")
     fi
     local dir=$(dirname "$path")
-    local ext=${f##*.};    [[ "$f" != "$ext" ]] || ext=""
+    local ext=${f##*.};    [[ "$f" != "$ext" && "$ext" != */* ]] || ext=""
     local base=$(basename "$file" ".$ext")
     local IFS=$'\n'		# Tildify shouldn't split on spaaces
     tput el
     stty echo		 # Temporarily show characters the user types.
     tput cnorm		 # Temporarily show the cursor.
     if [[ "$mode" == "rename" ]]; then
-	read -d $'\r' -p "Rename to: " -e -i $(tildify "$path") newname
+	read -d $'\r' -p "Rename to: " -e -i "$(tildify "$path")" newname
     elif [[ "$mode" == "save" ]]; then
 	read -d $'\r' -p "Save a copy of $base in: " -e \
-	     -i $(tildify "${lastuseddir:-$dir}/") newname
+	     -i "$(tildify "${lastuseddir:-$dir}/")" newname
     else
 	read -d $'\r' -p "Move to: " -e -i "$(tildify "${lastuseddir:-$dir}/")" newname
     fi
@@ -682,14 +682,14 @@ saverenamemove() {
     fi
     [[ -d "$newname" ]] && newname+="/."   # Use existing directory.
     [[ "$newname" != */ ]] || newname+="." # Never end with a "/" (for dirname.)
-    mkdir -p $(dirname "$newname")
+    mkdir -p "$(dirname "$newname")"
     newname=$(realpath "$newname" 2>/dev/null) # Canonicalize
 
     if [[ "$newname"  &&  "$newname" != "$dir"  &&  ! "$newname" -ef "$path" ]]
     then
 	if [[ -d "$newname" ]]; then
 	    # New directory specified, so keep same filename
-	    newname="$newname/$base.$ext"
+	    newname="$newname/$base"
 	fi
 
 	local newext="${newname##*.}"
@@ -698,7 +698,7 @@ saverenamemove() {
 	    ext="$newext"
 	fi
 
-	if [[ "$newname" != *$ext ]]; then
+	if [[ "$newname" != *"$ext" ]]; then
 	    # User specified filename without the extension.
 	    newname="$newname.$ext"
 	fi
@@ -743,6 +743,7 @@ saverenamemove() {
 		E "Filename is now $newname";
 		f="$newname"  # Write to outerscope variable "$f". (!!!)
 	    else
+		E "Failed: filename is still \"$file\""
 		return 1
 	    fi
 	fi
