@@ -834,7 +834,7 @@ yandeximagesearch() {
     # (Unlike Tineye, Bing, and Google). Yandex does require
     # javascript, so we use 'chrome --dump-dom' to retrieve the html.
     local file="$1"
-    local output resultPage deleteme="" # Local vars
+    local output resultPage="" deleteme="" # Local vars
     local scale=">1000x>1000"	# Image size to scale to before searching.
     tput cnorm			# Temporarily show cursor for w3m
 
@@ -858,31 +858,12 @@ yandeximagesearch() {
 		      --form upfile='@-;filename=foo.jpg'  $url)
     if [[ $? -gt 0 ]]; then return; fi
 
-    # First, check for Content-Based Image Recognition.
-    # Look for "params":{"url":"cbir_id=4725%2FkrTprMr_05694&rpt=imageview"
-    resultPage=$(echo "$output" | grep -o '"cbir_id=[^"]*"' )
-    if [[ "$resultPage" ]]; then
-	resultPage=${resultPage#\"}; resultPage=${resultPage%\"}
-	resultPage="/images/search?$resultPage"
-    fi
-
-    if [[ -z "$resultPage" ]]; then
-	echo "Couldn't find CBIR result from Yandex, trying img_url." >&2
-	# Look for, eg: "nextPageUrl":"/images/search?text=&amp;img_url=https%3A//www.fotopolis.pl/i/images/4/2/3/d2FjPTIzNDB4MQ%3D%3D_src_179423-1555946732rlzp7d96a9729_2048px22_1100mv.jpg&amp;rpt=imagedups"
-	resultPage=$(
-	    echo "$output" |
-		sed -rn '
-			 s/&amp;/\&/g;
-			 s/.*img_url=(http[^"&;]*).*/\1/p;
-			')
-	if [[ "$resultPage" ]]; then
-	    echo "Oh good, img_url worked." >&2
-	    resultPage="/images/search?url=$resultPage&rpt=imageview"
-	fi
-    fi
-
-
-    if [[ "$resultPage" ]]; then
+    # Check for the Content-Based Image Recognition.
+    # Looks for "params":{ "cbirId": "2186041/7c7GvOHfH0j9xPH5gCxYPw1890", "originalImageUrl": "https://avatars.mds.yandex.net/get-images-cbir/21860/Cx1890/orig"
+    cbir_id=$( gron <<<"$output" | sed -n 's/";$//; s/.*cbirId = "//p')
+    cbir_url=$(gron <<<"$output" | sed -n 's/";$//; s/.*originalImageUrl = "//p')
+    if [[ "$cbir_id" && "$cbir_url" ]]; then
+	resultPage='/images/search?rpt=imageview&url='$cbir_url'&cbir_id='$cbir_id
 	echo "Found yandex.com/$(unuriescape "$resultPage")" >&2
 	dumpdom https://yandex.com$resultPage |
 	    sed 's|<head>|<base href="https://yandex.com/images"><head>|' > "$tmpdir/yandex.html"
@@ -891,12 +872,6 @@ yandeximagesearch() {
     else
 	echo "Error parsing results from Yandex." >&2
     fi
-
-    # Old way. Maybe delete this.
-    ## Use cookies to get page, then show in w3m
-    # curl --cookie "$cookie" --form upfile=@"$file" $url | tee debug |
-    #   sed 's#<head>#<head><base href="'$url'">#' |
-    #	w3m -T text/html
 
     if [[ "$deleteme" ]]; then
 	rm -f "$deleteme"
