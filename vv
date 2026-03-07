@@ -1093,6 +1093,7 @@ imageinfo() {
 
 mimetype() {
     # Given an image filename, report its MIME type. (e.g., "image/jpeg").
+    # Used by vv to determine if a file should be shown or ignored.
     local type=$(file --mime-type --brief --dereference -- "$file")
 
     # Rarely, some file formats will not have a good MIME type.
@@ -1101,6 +1102,10 @@ mimetype() {
 	    *miff|*MIFF)  type="image/miff"  ;;		# ImageMagick.
 	    *rgb|*RGB)    type="image/sgi"   ;;		# SGI RLE color.
 	    *bw|*BW)      type="image/sgi"   ;;		# SGI RLE bw.
+	esac
+    elif [[ $type == text/plain ]]; then
+	case $file in
+	    *xbm|*XBM)  type="image/x-xbitmap"  ;; 	# X11 bitmap.
 	esac
     fi
     echo "$type"
